@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Woredrobe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #080808;
+      --surface:    #111111;
+      --surface-2:  #1a1a1a;
+      --border:     rgba(255,255,255,0.065);
+      --border-2:   rgba(255,255,255,0.12);
+      --text:       #e4ddd0;
+      --text-2:     #706b64;
+      --text-3:     #3d3a36;
+      --accent:     #c8a86a;
+      --accent-dim: rgba(200,168,106,0.13);
+      --font-d:     'Playfair Display', Georgia, serif;
+      --font-b:     'Inter', system-ui, sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-b);
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── App Shell ── */
+    #app {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* ── Header ── */
+    .app-header {
+      padding: 22px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-shrink: 0;
+    }
+    .app-logo {
+      font-family: var(--font-d);
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding-top: 2px;
+    }
+    .app-date {
+      text-align: right;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+    .app-date strong {
+      display: block;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+    }
+
+    /* ── Views ── */
+    .views {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .view {
+      display: none;
+      padding: 0 24px 120px;
+    }
+    .view.active { display: block; }
+
+    /* ── Bottom Nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 480px;
+      background: rgba(8,8,8,0.96);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border-2);
+      display: flex;
+      z-index: 100;
+    }
+    .nav-btn {
+      flex: 1;
+      padding: 13px 0 18px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-2);
+      font-family: var(--font-b);
+      font-size: 9.5px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-btn.active { color: var(--accent); }
+    .nav-icon { font-size: 17px; line-height: 1; }
+
+    /* ── Section headers (shared) ── */
+    .section-header {
+      padding: 28px 0 22px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title {
+      font-family: var(--font-d);
+      font-size: 36px;
+      font-weight: 600;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+    }
+    .section-sub {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--text-2);
+      letter-spacing: 0.06em;
+    }
+
+    /* ─────────────────────────────────────
+       TODAY VIEW
+    ───────────────────────────────────── */
+    .today-intro {
+      padding: 28px 0 0;
+    }
+    .season-pill {
+      display: inline-block;
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      border: 1px solid var(--border-2);
+      padding: 3px 9px;
+      border-radius: 2px;
+      margin-bottom: 14px;
+    }
+    .today-heading {
+      font-family: var(--font-d);
+      font-size: 46px;
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: -0.025em;
+      margin-bottom: 5px;
+    }
+    .today-sub {
+      font-size: 11px;
+      color: var(--text-2);
+      letter-spacing: 0.06em;
+    }
+    .shuffle-hint {
+      font-size: 10px;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+    }
+
+    /* Outfit Card */
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .outfit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 20px;
+      overflow: hidden;
+      animation: cardIn 0.3s ease-out both;
+      transition: border-color 0.3s;
+    }
+    .outfit-card.is-locked {
+      border-color: rgba(200,168,106,0.45);
+    }
+
+    .card-top {
+      padding: 20px 20px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-badges {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      margin-bottom: 13px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 2px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .badge-age1 { background: var(--accent-dim); color: var(--accent); }
+    .badge-age2 { background: rgba(200,168,106,0.22); color: #debb7a; }
+    .badge-occ  { background: var(--surface-2); color: var(--text-2); }
+    .badge-lock { background: rgba(200,168,106,0.15); color: var(--accent); border: 1px solid rgba(200,168,106,0.35); }
+
+    .card-name {
+      font-family: var(--font-d);
+      font-size: 30px;
+      font-weight: 600;
+      line-height: 1.12;
+      letter-spacing: -0.015em;
+    }
+    .card-note {
+      margin-top: 9px;
+      font-size: 13px;
+      color: var(--text-2);
+      font-style: italic;
+      font-family: var(--font-d);
+      line-height: 1.55;
+    }
+
+    /* Items */
+    .card-items {
+      padding: 14px 20px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .items-label {
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 11px;
+    }
+    .item-row {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .item-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .item-num {
+      font-size: 10px;
+      color: var(--text-3);
+      width: 18px;
+      text-align: right;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .item-swatch {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .item-label {
+      flex: 1;
+      font-size: 13.5px;
+      color: var(--text);
+    }
+    .item-brand {
+      font-size: 10px;
+      color: var(--text-3);
+      letter-spacing: 0.04em;
+    }
+    .item-cat {
+      font-size: 10px;
+      color: var(--text-3);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .item-star {
+      font-size: 10px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* Actions */
+    .card-actions {
+      padding: 14px 20px;
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      flex: 1;
+      padding: 12px 10px;
+      border-radius: 4px;
+      font-family: var(--font-b);
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.18s;
+      border: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-2);
+      color: var(--text-2);
+    }
+    .btn-outline:active { border-color: var(--text); color: var(--text); }
+    .btn-primary { background: var(--accent); color: #080808; }
+    .btn-primary:active { background: #d6b87a; }
+    .btn-locked {
+      background: var(--accent-dim);
+      border: 1px solid rgba(200,168,106,0.4);
+      color: var(--accent);
+    }
+
+    /* Outfit counter */
+    .outfit-counter {
+      text-align: center;
+      font-size: 10px;
+      color: var(--text-3);
+      letter-spacing: 0.1em;
+      margin-top: 14px;
+    }
+
+    /* Weather widget */
+    .weather-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-top: 18px;
+      animation: cardIn 0.4s ease-out both;
+    }
+    .weather-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+    .weather-info { flex: 1; }
+    .weather-temp {
+      font-family: var(--font-d);
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .weather-desc {
+      font-size: 11px;
+      color: var(--text-2);
+      margin-top: 2px;
+      letter-spacing: 0.04em;
+    }
+    .weather-feel {
+      font-size: 10px;
+      color: var(--text-3);
+      text-align: right;
+      line-height: 1.5;
+    }
+    .weather-feel span { display: block; }
+    .weather-match {
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6a9a6a;
+      background: rgba(106,154,106,0.12);
+      border: 1px solid rgba(106,154,106,0.25);
+      padding: 3px 8px;
+      border-radius: 2px;
+    }
+    .weather-loading {
+      font-size: 11px;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      margin-top: 16px;
+      text-align: center;
+    }
+
+    /* ─────────────────────────────────────
+       OUTFITS VIEW
+    ───────────────────────────────────── */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      padding: 16px 0 0;
+    }
+    .filter-btn {
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      border-radius: 2px;
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid var(--border-2);
+      color: var(--text-2);
+      font-family: var(--font-b);
+      font-weight: 500;
+      transition: all 0.18s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .filter-btn.active {
+      background: var(--accent-dim);
+      border-color: rgba(200,168,106,0.4);
+      color: var(--accent);
+    }
+
+    .outfits-list { padding-top: 4px; }
+    .outfit-list-item {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: opacity 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .outfit-list-item.dim { opacity: 0.35; }
+
+    .ol-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .ol-name {
+      font-family: var(--font-d);
+      font-size: 21px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .ol-age {
+      font-size: 15px;
+      color: var(--accent);
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+    .ol-meta {
+      font-size: 10.5px;
+      color: var(--text-2);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .ol-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 4px 8px;
+      font-size: 11px;
+      color: var(--text-2);
+    }
+    .chip-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Expanded outfit card in list */
+    .ol-expanded {
+      display: none;
+      margin-top: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .ol-expanded.open { display: block; }
+    .ol-exp-items { padding: 14px 16px; }
+    .ol-exp-note {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 12.5px;
+      color: var(--text-2);
+      font-style: italic;
+      font-family: var(--font-d);
+    }
+
+    /* ─────────────────────────────────────
+       NOTES VIEW
+    ───────────────────────────────────── */
+    .notes-group { margin-top: 26px; }
+    .notes-group-title {
+      font-size: 9px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .note-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px 18px;
+      margin-bottom: 10px;
+    }
+    .note-card-title {
+      font-family: var(--font-d);
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .note-list { list-style: none; }
+    .note-list li {
+      font-size: 13px;
+      color: var(--text-2);
+      padding: 5px 0 5px 16px;
+      position: relative;
+      line-height: 1.55;
+      border-bottom: 1px solid var(--border);
+    }
+    .note-list li:last-child { border-bottom: none; padding-bottom: 0; }
+    .note-list li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: var(--text-3);
+    }
+    .note-list li strong { color: var(--text); font-weight: 500; }
+
+    /* Wishlist */
+    .wish-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      gap: 12px;
+    }
+    .wish-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .wish-name { color: var(--text); }
+    .wish-priority {
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 3px 7px;
+      border-radius: 2px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .p-high { background: var(--accent-dim); color: var(--accent); }
+    .p-med  { background: var(--surface-2); color: var(--text-2); }
+
+    /* Missing piece callout */
+    .callout {
+      border: 1px solid rgba(200,168,106,0.25);
+      background: rgba(200,168,106,0.06);
+      border-radius: 6px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: var(--text-2);
+      line-height: 1.6;
+      font-family: var(--font-d);
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+    .callout strong { color: var(--accent); font-style: normal; font-weight: 600; }
+
+    /* ─────────────────────────────────────
+       WARDROBE VIEW
+    ───────────────────────────────────── */
+    .wrd-group-label {
+      font-size: 9px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding: 22px 0 10px;
+    }
+    .wrd-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .wrd-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .wrd-info { flex: 1; min-width: 0; }
+    .wrd-name {
+      font-size: 14px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .wrd-meta {
+      font-size: 10px;
+      color: var(--text-3);
+      margin-top: 1px;
+      letter-spacing: 0.04em;
+    }
+    .wrd-tags { display: flex; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+    .wrd-tag {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 2px;
+      background: var(--surface-2);
+      color: var(--text-3);
+    }
+    .wrd-tag-star { background: var(--accent-dim); color: var(--accent); }
+    .wrd-tag-avoid { background: rgba(180,100,100,0.1); color: #b07070; }
+    .wrd-del {
+      background: none;
+      border: 1px solid var(--border-2);
+      color: var(--text-3);
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrd-del:active { border-color: #b07070; color: #b07070; }
+
+    /* Add Item form */
+    .wrd-add-btn {
+      width: 100%;
+      margin-top: 20px;
+      padding: 13px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(200,168,106,0.3);
+      border-radius: 6px;
+      color: var(--accent);
+      font-family: var(--font-b);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrd-form {
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 16px;
+      display: none;
+    }
+    .wrd-form.open { display: block; }
+    .wrd-form-title {
+      font-family: var(--font-d);
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 18px;
+    }
+    .form-row { margin-bottom: 14px; }
+    .form-label {
+      display: block;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      margin-bottom: 6px;
+    }
+    .form-input, .form-select {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      border-radius: 4px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-family: var(--font-b);
+      font-size: 14px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--accent);
+    }
+    .form-color-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .form-color-pick {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--border-2);
+      padding: 2px;
+      background: none;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .form-color-pick::-webkit-color-swatch-wrapper { padding: 0; border-radius: 50%; }
+    .form-color-pick::-webkit-color-swatch { border: none; border-radius: 50%; }
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 0; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <header class="app-header">
+    <div class="app-logo">Woredrobe</div>
+    <div class="app-date" id="headerDate"></div>
+  </header>
+
+  <div class="views" id="views">
+
+    <!-- TODAY -->
+    <div class="view active" id="view-today">
+      <div class="today-intro">
+        <div class="season-pill" id="seasonPill"></div>
+        <div class="today-heading">Today's<br>Look.</div>
+        <div class="today-sub">Curated for your build &amp; colouring</div>
+        <div class="shuffle-hint" id="shuffleHint"></div>
+      </div>
+      <div id="weatherWidget"></div>
+      <div id="todayCard"></div>
+      <div class="outfit-counter" id="outfitCounter"></div>
+    </div>
+
+    <!-- ALL OUTFITS -->
+    <div class="view" id="view-outfits">
+      <div class="section-header">
+        <div class="section-title">All<br>Outfits</div>
+        <div class="section-sub">12 curated combinations</div>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn active" data-filter="season" onclick="setFilter('season',this)">In Season</button>
+        <button class="filter-btn" data-filter="all" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" data-filter="age2" onclick="setFilter('age2',this)">Ages Up Most</button>
+      </div>
+      <div class="outfits-list" id="outfitsList"></div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="view" id="view-notes">
+      <div class="section-header">
+        <div class="section-title">Style<br>Notes</div>
+        <div class="section-sub">What works for you</div>
+      </div>
+      <div id="notesList"></div>
+    </div>
+
+    <!-- WARDROBE -->
+    <div class="view" id="view-wardrobe">
+      <div class="section-header" style="margin-bottom:0">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end">
+          <div>
+            <div class="section-title">My<br>Wardrobe</div>
+            <div class="section-sub" id="wardrobeCount"></div>
+          </div>
+          <button onclick="rebuildOutfits();this.textContent='✓ Done';setTimeout(()=>this.textContent='Refresh Outfits',2000)"
+            style="background:var(--accent-dim);border:1px solid rgba(200,168,106,0.3);border-radius:4px;color:var(--accent);font-family:var(--font-b);font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;padding:8px 12px;cursor:pointer;white-space:nowrap;margin-bottom:4px">
+            Refresh Outfits
+          </button>
+        </div>
+      </div>
+      <div id="wardrobeList"></div>
+    </div>
+
+  </div><!-- /.views -->
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="today" onclick="navigateTo('today',this)">
+      <span class="nav-icon">◎</span>Today
+    </button>
+    <button class="nav-btn" data-view="outfits" onclick="navigateTo('outfits',this)">
+      <span class="nav-icon">▤</span>Outfits
+    </button>
+    <button class="nav-btn" data-view="notes" onclick="navigateTo('notes',this)">
+      <span class="nav-icon">◈</span>Notes
+    </button>
+    <button class="nav-btn" data-view="wardrobe" onclick="navigateTo('wardrobe',this)">
+      <span class="nav-icon">✦</span>Clothes
+    </button>
+  </nav>
+
+</div><!-- /#app -->
+
+<script>
+/* ═══════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════ */
+
+const DEFAULT_WARDROBE = {
+   1: { name:'Dark Navy Quarter-Zip',          color:'#1a2744', cat:'Sweater' },
+   2: { name:'Cream Quarter-Zip',               color:'#e8dfc8', cat:'Sweater' },
+   3: { name:'Khaki Harrington Jacket',         color:'#b0a07a', cat:'Jacket',     star:true },
+   4: { name:'Cream/Blue Colorblock Crewneck',  color:'#4878a8', cat:'Sweatshirt', brand:'The Normal Brand' },
+   5: { name:'Light Grey Crewneck',             color:'#b8b6b0', cat:'Sweatshirt', brand:'Uniqlo' },
+   6: { name:'Dark Charcoal V-Neck',            color:'#3c3c3c', cat:'Sweater' },
+   7: { name:'Forest Green Crewneck',           color:'#2d5a3d', cat:'Sweatshirt', brand:'Uniqlo' },
+   8: { name:'Black Basketball Hoodie',         color:'#1a1a1a', cat:'Hoodie' },
+   9: { name:'Olive Pullover Hoodie',           color:'#6b7840', cat:'Hoodie' },
+  10: { name:'White Polo',                      color:'#f0ede8', cat:'Polo',        brand:'Uniqlo' },
+  11: { name:'Black Crewneck Sweater',          color:'#232323', cat:'Sweater',     brand:'Uniqlo' },
+  12: { name:'Black Quarter-Zip',               color:'#1d1d1d', cat:'Sweater' },
+  13: { name:'Grey SNL Graphic Crewneck',       color:'#8a8a8a', cat:'Sweatshirt' },
+  14: { name:'Sage/Stone Grey Tee',             color:'#9aaa90', cat:'Tee',         brand:'Uniqlo U' },
+  15: { name:'Black Tee',                       color:'#1a1a1a', cat:'Tee',         brand:'Uniqlo U' },
+  16: { name:'Cream/Beige Tee',                 color:'#e2d8c4', cat:'Tee',         brand:'Uniqlo' },
+  17: { name:'Olive Technical Shorts',          color:'#6b7840', cat:'Shorts' },
+  18: { name:'Black Cargo Pants',               color:'#141414', cat:'Pants' },
+  19: { name:'Black Shorts',                    color:'#1a1a1a', cat:'Shorts' },
+  21: { name:'Cream/White Linen Shorts',        color:'#ede8da', cat:'Shorts' },
+  22: { name:'Olive Chino Shorts',              color:'#7a8a56', cat:'Shorts',      brand:'American Eagle' },
+  23: { name:'Navy Chino Shorts',               color:'#2a3a60', cat:'Shorts',      brand:'Hollister' },
+  24: { name:'Khaki Chino Shorts',              color:'#c4ae82', cat:'Shorts',      brand:'American Eagle' },
+  25: { name:'Light Wash Loose Jeans',          color:'#a0b8d0', cat:'Jeans',       brand:'Old Navy', avoid:true },
+  26: { name:'Medium Wash Loose Jeans',         color:'#6080a0', cat:'Jeans',       brand:'Old Navy', avoid:true },
+  27: { name:'Grey Jeans',                      color:'#7a7a7a', cat:'Jeans',       brand:'Old Navy' },
+  28: { name:'Grey Nike Sweatpants',            color:'#9a9a9a', cat:'Sweats',      brand:'Nike',     avoid:true },
+  29: { name:'Black Nike Sweatpants',           color:'#1c1c1c', cat:'Sweats',      brand:'Nike',     avoid:true },
+  30: { name:'Dark Wash Slim Jeans',            color:'#243048', cat:'Jeans',       brand:'Old Navy', star:true },
+  31: { name:'White Crewneck Tee',              color:'#f0ede8', cat:'Tee',         brand:'Uniqlo U' },
+  32: { name:'Light Grey/Oatmeal Quarter-Zip',  color:'#d0ccba', cat:'Sweater' },
+};
+
+// Load wardrobe from localStorage, seeding with defaults on first run
+const WSTORE_KEY = 'woredrobe_wardrobe_v1';
+function loadWardrobe() {
+  try {
+    const saved = localStorage.getItem(WSTORE_KEY);
+    return saved ? JSON.parse(saved) : { ...DEFAULT_WARDROBE };
+  } catch(e) { return { ...DEFAULT_WARDROBE }; }
+}
+function saveWardrobe() {
+  localStorage.setItem(WSTORE_KEY, JSON.stringify(W));
+}
+let W = loadWardrobe();
+
+const DEFAULT_OUTFITS = [
+  {
+    id:1, name:'The Sharp Casual',
+    items:[1,30], ageRating:2,
+    occasion:'Everyday',
+    seasons:['winter','spring','fall'],
+    tempMin:23, tempMax:68,
+    note:'Navy quarter-zip over dark slim jeans — your strongest signature move. Quarter-zips over slim dark denim read oldest on you.'
+  },
+  {
+    id:2, name:'Harrington Layer',
+    items:[3,11,30], ageRating:2,
+    occasion:'Going Out',
+    seasons:['spring','fall'],
+    tempMin:46, tempMax:68,
+    note:'The Harrington does all the heavy lifting. Stack the black sweater underneath for structure. Most age-elevated combination you own.'
+  },
+  {
+    id:3, name:'Tonal Dark',
+    items:[6,30], ageRating:1,
+    occasion:'Everyday',
+    seasons:['winter','fall','spring'],
+    tempMin:23, tempMax:64,
+    note:'Dark tonal dressing reads effortlessly mature. Charcoal and navy are close enough to look intentional, not mismatched.'
+  },
+  {
+    id:4, name:'Summer Prep',
+    items:[10,24], ageRating:1,
+    occasion:'Summer / Casual',
+    seasons:['summer','spring'],
+    tempMin:68, tempMax:104,
+    note:'Clean and structured for warm weather. The polo adds polish without trying too hard. Tuck it in for an extra point.'
+  },
+  {
+    id:5, name:'Forest Tonal',
+    items:[7,30], ageRating:1,
+    occasion:'Weekend',
+    seasons:['fall','spring','winter'],
+    tempMin:23, tempMax:64,
+    note:'Deep forest green is one of your three best colours. Rich, earthy, and high contrast against pale skin.'
+  },
+  {
+    id:6, name:'Cream Classic',
+    items:[2,30], ageRating:2,
+    occasion:'Everyday',
+    seasons:['winter','spring','fall'],
+    tempMin:23, tempMax:68,
+    note:'High contrast cream over dark denim is particularly sharp on your colouring. Clean, deliberate, and always works.'
+  },
+  {
+    id:7, name:'Earth Layer',
+    items:[9,18], ageRating:1,
+    occasion:'Casual',
+    seasons:['spring','fall'],
+    tempMin:46, tempMax:72,
+    note:'Earthy tones and utility shapes. Relaxed but deliberate — reads cool rather than sloppy.'
+  },
+  {
+    id:8, name:'Colorblock Edit',
+    items:[4,30], ageRating:1,
+    occasion:'Weekend',
+    seasons:['fall','spring'],
+    tempMin:46, tempMax:68,
+    note:'Let the crewneck be the piece — everything else stays quiet. The cream/blue colourblock works against dark denim.'
+  },
+  {
+    id:9, name:'All Black',
+    items:[15,18], ageRating:1,
+    occasion:'Casual / Going Out',
+    seasons:['winter','fall','spring','summer'],
+    tempMin:54, tempMax:95,
+    note:'Monochrome black is always clean. Straightforward and confident. Works in any season.'
+  },
+  {
+    id:10, name:'Grey & Denim',
+    items:[5,30], ageRating:1,
+    occasion:'Everyday',
+    seasons:['winter','fall','spring'],
+    tempMin:23, tempMax:64,
+    note:'Neutral grey over dark denim. Understated, easy to execute, and easy to layer over if needed.'
+  },
+  {
+    id:11, name:'Harrington Smart',
+    items:[3,14,30], ageRating:2,
+    occasion:'Going Out',
+    seasons:['spring','fall'],
+    tempMin:50, tempMax:72,
+    note:'Sage tee under the Harrington gives a tonal earthiness that feels very considered. Your sharpest three-piece look right now.'
+  },
+  {
+    id:12, name:'Navy & Grey',
+    items:[1,27], ageRating:1,
+    occasion:'Everyday',
+    seasons:['winter','fall'],
+    tempMin:23, tempMax:64,
+    note:'Softer tonal alternative to the dark denim anchor. Navy/grey reads cool and gives the slim jeans a rest.'
+  },
+];
+
+const OUTFITS_STORE = 'woredrobe_outfits_v1';
+function loadOutfits() {
+  try {
+    const s = localStorage.getItem(OUTFITS_STORE);
+    return s ? JSON.parse(s) : null;
+  } catch(e) { return null; }
+}
+function saveOutfits(list) {
+  localStorage.setItem(OUTFITS_STORE, JSON.stringify(list));
+}
+let OUTFITS = loadOutfits() || DEFAULT_OUTFITS;
+
+/* ═══════════════════════════════════════════
+   STATE & STORAGE
+═══════════════════════════════════════════ */
+
+const STORE_KEY = 'woredrobe_v2';
+let outfitsFilter = 'season';
+let expandedOutfitId = null;
+let weatherData = null; // { temp, feelsLike, desc, icon, code }
+
+function store() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function saveStore(d) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(d));
+}
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+function getSeason() {
+  const m = new Date().getMonth();
+  if (m <= 1 || m === 11) return 'winter';
+  if (m <= 4) return 'spring';
+  if (m <= 7) return 'summer';
+  return 'fall';
+}
+function seasonLabel() {
+  return { winter:'Winter', spring:'Spring', summer:'Summer', fall:'Autumn' }[getSeason()];
+}
+function seasonalPool() {
+  return OUTFITS.filter(o => o.seasons.includes(getSeason()));
+}
+function weatherPool() {
+  const base = seasonalPool();
+  if (!weatherData) return base;
+  const t = weatherData.temp;
+  const matched = base.filter(o => t >= o.tempMin && t <= o.tempMax);
+  return matched.length >= 2 ? matched : base; // fallback if too few matches
+}
+function dateHash() {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
+}
+function currentOutfit() {
+  const s = store();
+  const pool = weatherPool();
+  const offset = (s.date === todayKey() ? (s.offset || 0) : 0);
+  return pool[(dateHash() + offset) % pool.length];
+}
+function outfitMatchesWeather(outfit) {
+  if (!weatherData) return null;
+  const t = weatherData.temp;
+  return t >= outfit.tempMin && t <= outfit.tempMax;
+}
+
+/* ═══════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════ */
+
+function renderHeader() {
+  const d = new Date();
+  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('headerDate').innerHTML =
+    `<strong>${days[d.getDay()]}</strong>${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+/* ═══════════════════════════════════════════
+   TODAY VIEW
+═══════════════════════════════════════════ */
+
+function renderToday() {
+  const s = store();
+  if (s.date !== todayKey()) {
+    saveStore({ date: todayKey(), offset: 0, locked: false, outfitId: null });
+  }
+  const outfit = currentOutfit();
+  const locked = store().locked && store().outfitId === outfit.id;
+  const pool   = seasonalPool();
+  const offset = store().offset || 0;
+  const poolIdx = (dateHash() + offset) % pool.length;
+
+  document.getElementById('seasonPill').textContent = seasonLabel();
+  document.getElementById('shuffleHint').textContent = locked ? '' : 'Swipe left to shuffle';
+  document.getElementById('outfitCounter').textContent =
+    `${poolIdx + 1} of ${pool.length} seasonal outfits`;
+  document.getElementById('todayCard').innerHTML = buildOutfitCard(outfit, locked);
+}
+
+function buildOutfitCard(outfit, locked) {
+  const ageLabel = outfit.ageRating === 2 ? '⬆⬆ Ages up a lot' : '⬆ Ages up';
+  const ageCls   = outfit.ageRating === 2 ? 'badge-age2' : 'badge-age1';
+  const lockBadge = locked ? `<span class="badge badge-lock">✓ Locked In</span>` : '';
+  const weatherMatch = outfitMatchesWeather(outfit);
+  const weatherBadge = weatherData
+    ? (weatherMatch
+        ? `<span class="weather-match">✓ Right for today</span>`
+        : `<span class="badge badge-occ" style="color:#b87070;background:rgba(180,100,100,0.1);border:1px solid rgba(180,100,100,0.2)">⚠ Off temp</span>`)
+    : '';
+
+  const rows = outfit.items.map(id => {
+    const item = W[id];
+    if (!item) return '';
+    const brand = item.brand ? `<span class="item-brand">${item.brand}</span>` : '';
+    const star  = item.star  ? `<span class="item-star">★</span>` : '';
+    return `
+      <div class="item-row">
+        <span class="item-num">${id}</span>
+        <span class="item-swatch" style="background:${item.color}"></span>
+        <span class="item-label">${item.name} ${brand}</span>
+        ${star}
+        <span class="item-cat">${item.cat}</span>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="outfit-card ${locked ? 'is-locked' : ''}">
+      <div class="card-top">
+        <div class="card-badges">
+          <span class="badge ${ageCls}">${ageLabel}</span>
+          <span class="badge badge-occ">${outfit.occasion}</span>
+          ${lockBadge}
+          ${weatherBadge}
+        </div>
+        <div class="card-name">${outfit.name}</div>
+        <div class="card-note">${outfit.note}</div>
+      </div>
+      <div class="card-items">
+        <div class="items-label">Pieces</div>
+        ${rows}
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-outline" onclick="doShuffle()">Shuffle</button>
+        <button class="btn ${locked ? 'btn-locked' : 'btn-primary'}" onclick="doLock(${outfit.id})">
+          ${locked ? '✓ Locked In' : 'Lock In'}
+        </button>
+      </div>
+    </div>`;
+}
+
+function doShuffle() {
+  const s = store();
+  saveStore({ ...s, date: todayKey(), offset: (s.offset||0)+1, locked: false, outfitId: null });
+  renderToday();
+}
+
+function doLock(outfitId) {
+  const s = store();
+  const nowLocked = !(s.locked && s.outfitId === outfitId);
+  saveStore({ ...s, locked: nowLocked, outfitId: nowLocked ? outfitId : null });
+  renderToday();
+}
+
+/* Swipe to shuffle */
+(function() {
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (document.getElementById('view-today').classList.contains('active')) {
+      const dx = e.changedTouches[0].clientX - tx;
+      if (dx < -60) doShuffle();
+    }
+  }, { passive: true });
+})();
+
+/* ═══════════════════════════════════════════
+   OUTFITS VIEW
+═══════════════════════════════════════════ */
+
+function setFilter(f, btn) {
+  outfitsFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderOutfitsList();
+}
+
+function renderOutfitsList() {
+  const season = getSeason();
+  let list = [...OUTFITS];
+  if (outfitsFilter === 'season') list = list.filter(o => o.seasons.includes(season));
+  if (outfitsFilter === 'age2')   list = list.filter(o => o.ageRating === 2);
+  list.sort((a,b) => b.ageRating - a.ageRating);
+
+  document.getElementById('outfitsList').innerHTML = list.map(o => {
+    const inSeason = o.seasons.includes(season);
+    const ageIcons = '⬆'.repeat(o.ageRating);
+    const chips = o.items.map(id => {
+      const item = W[id]; if (!item) return '';
+      const short = item.name.split(' ').slice(0,3).join(' ');
+      return `<div class="chip"><span class="chip-dot" style="background:${item.color}"></span>${short}</div>`;
+    }).join('');
+
+    const rows = o.items.map(id => {
+      const item = W[id]; if (!item) return '';
+      const brand = item.brand ? `<span class="item-brand">${item.brand}</span>` : '';
+      const star  = item.star  ? `<span class="item-star">★</span>` : '';
+      return `<div class="item-row">
+        <span class="item-num">${id}</span>
+        <span class="item-swatch" style="background:${item.color}"></span>
+        <span class="item-label">${item.name} ${brand}</span>
+        ${star}
+        <span class="item-cat">${item.cat}</span>
+      </div>`;
+    }).join('');
+
+    const expanded = expandedOutfitId === o.id;
+    const dimClass = (outfitsFilter === 'all' && !inSeason) ? 'dim' : '';
+
+    return `
+      <div class="outfit-list-item ${dimClass}" onclick="toggleExpand(${o.id})">
+        <div class="ol-header">
+          <div class="ol-name">${o.name}</div>
+          <div class="ol-age">${ageIcons}</div>
+        </div>
+        <div class="ol-meta">${o.occasion}${!inSeason ? ' · Out of season' : ''}</div>
+        <div class="ol-chips">${chips}</div>
+        <div class="ol-expanded ${expanded ? 'open' : ''}">
+          <div class="ol-exp-items">${rows}</div>
+          <div class="ol-exp-note">${o.note}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleExpand(id) {
+  expandedOutfitId = (expandedOutfitId === id) ? null : id;
+  renderOutfitsList();
+}
+
+/* ═══════════════════════════════════════════
+   NOTES VIEW
+═══════════════════════════════════════════ */
+
+function renderNotes() {
+  document.getElementById('notesList').innerHTML = `
+
+    <div class="notes-group">
+      <div class="notes-section-title notes-group-title">Your Profile</div>
+      <div class="note-card">
+        <div class="note-card-title">Build &amp; Colouring</div>
+        <ul class="note-list">
+          <li><strong>6'4, slim build</strong> — proportions are an advantage. Slim, tailored cuts are essential.</li>
+          <li><strong>Pale skin, blonde hair</strong> — deep colours create strong contrast and always work for you.</li>
+          <li><strong>Target aesthetic:</strong> 22–23. Structured over casual, considered over effortless.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="notes-group">
+      <div class="notes-group-title">What Works</div>
+      <div class="callout">
+        <strong>★ Two anchor pieces:</strong> Khaki Harrington (#3) and Dark Wash Slim Jeans (#30) are the backbone of your best outfits.
+      </div>
+      <div class="note-card">
+        <ul class="note-list">
+          <li><strong>Deep navy, forest green, dark charcoal</strong> — your three best colours. Rich, high-contrast, mature.</li>
+          <li><strong>Quarter-zip over slim dark jeans</strong> — reads oldest on you. Do this whenever possible.</li>
+          <li><strong>Khaki Harrington (#3)</strong> — your single most age-elevating piece. Use it often.</li>
+          <li><strong>Dark Wash Slim Jeans (#30)</strong> — the right bottom for almost every outfit.</li>
+          <li>High contrast (cream top + dark bottom) is sharp against pale skin.</li>
+          <li>Slim cuts always — your height needs vertical line, not volume.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="notes-group">
+      <div class="notes-group-title">Avoid for Older Look</div>
+      <div class="note-card">
+        <ul class="note-list">
+          <li><strong>Loose jeans (#25, #26)</strong> — adds bulk and reads much younger. Save for home.</li>
+          <li><strong>Sweatpants (#28, #29)</strong> — fine indoors. Not for going out.</li>
+          <li><strong>Basketball hoodie (#8)</strong> — ages you down significantly. Avoid in public.</li>
+          <li><strong>Graphic sweatshirt (#13)</strong> — use only occasionally and on fully casual days.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="notes-group">
+      <div class="notes-group-title">Wishlist — Buy These Next</div>
+      <div class="note-card">
+        <div class="wish-row">
+          <span class="wish-name">White Oxford / OCBD Shirt</span>
+          <span class="wish-priority p-high">Essential</span>
+        </div>
+        <div class="wish-row">
+          <span class="wish-name">Dark Slim Chinos (navy or charcoal)</span>
+          <span class="wish-priority p-high">Essential</span>
+        </div>
+        <div class="wish-row">
+          <span class="wish-name">Chelsea Boots (black or dark brown)</span>
+          <span class="wish-priority p-high">Footwear</span>
+        </div>
+        <div class="wish-row">
+          <span class="wish-name">Brown Leather Belt</span>
+          <span class="wish-priority p-high">Accessory</span>
+        </div>
+        <div class="wish-row">
+          <span class="wish-name">Navy or Camel Overcoat</span>
+          <span class="wish-priority p-med">Next Season</span>
+        </div>
+        <div class="wish-row">
+          <span class="wish-name">Plain White Leather Sneakers</span>
+          <span class="wish-priority p-med">Footwear</span>
+        </div>
+        <div class="wish-row">
+          <span class="wish-name">Dark Crew-neck Tee (no logo)</span>
+          <span class="wish-priority p-med">Top</span>
+        </div>
+      </div>
+    </div>
+
+  `;
+}
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+
+function navigateTo(viewId, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + viewId).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('views').scrollTop = 0;
+}
+
+/* ═══════════════════════════════════════════
+   WEATHER
+═══════════════════════════════════════════ */
+
+const WMO_ICONS = {
+  0:'☀️', 1:'🌤', 2:'⛅️', 3:'☁️',
+  45:'🌫', 48:'🌫',
+  51:'🌦', 53:'🌦', 55:'🌧',
+  61:'🌧', 63:'🌧', 65:'🌧',
+  71:'🌨', 73:'🌨', 75:'❄️',
+  80:'🌦', 81:'🌧', 82:'⛈',
+  95:'⛈', 96:'⛈', 99:'⛈',
+};
+const WMO_DESC = {
+  0:'Clear sky', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast',
+  45:'Foggy', 48:'Foggy',
+  51:'Light drizzle', 53:'Drizzle', 55:'Heavy drizzle',
+  61:'Light rain', 63:'Rain', 65:'Heavy rain',
+  71:'Light snow', 73:'Snow', 75:'Heavy snow',
+  80:'Rain showers', 81:'Heavy showers', 82:'Violent showers',
+  95:'Thunderstorm', 96:'Thunderstorm', 99:'Thunderstorm',
+};
+
+function weatherIcon(code) { return WMO_ICONS[code] || '🌡'; }
+function weatherDesc(code) { return WMO_DESC[code] || 'Unknown'; }
+function cToF(c) { return Math.round(c * 9/5 + 32); }
+
+function rainBar(chance) {
+  if (chance == null) return '';
+  const willRain = chance >= 50;
+  const icon  = willRain ? '🌧' : '☀️';
+  const label = willRain ? 'Rain expected today' : 'No rain today';
+  const color = willRain ? '#7aaacc' : '#6a9a6a';
+  const bg    = willRain ? 'rgba(122,170,204,0.1)' : 'rgba(106,154,106,0.1)';
+  const border= willRain ? 'rgba(122,170,204,0.25)' : 'rgba(106,154,106,0.25)';
+  return `
+    <div style="display:flex;align-items:center;gap:10px;background:${bg};border:1px solid ${border};border-radius:6px;padding:11px 16px;margin-top:8px;">
+      <span style="font-size:18px;line-height:1">${icon}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500;color:${color}">${label}</div>
+        <div style="font-size:10px;color:var(--text-2);margin-top:2px;letter-spacing:0.04em">${chance}% chance of rain</div>
+      </div>
+    </div>`;
+}
+
+function renderWeatherWidget(w) {
+  const el = document.getElementById('weatherWidget');
+  if (!w) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="weather-bar">
+      <div class="weather-icon">${weatherIcon(w.code)}</div>
+      <div class="weather-info">
+        <div class="weather-temp">${Math.round(w.temp)}°F</div>
+        <div class="weather-desc">${weatherDesc(w.code)}${w.city ? ` · ${w.city}` : ''}</div>
+      </div>
+      <div class="weather-feel">
+        <span style="color:var(--text-2);font-size:10px">Feels like</span>
+        <span style="color:var(--text);font-size:13px;font-weight:500">${Math.round(w.feelsLike)}°F</span>
+      </div>
+    </div>
+    ${rainBar(w.rainChance)}`;
+}
+
+async function fetchWeather() {
+  const el = document.getElementById('weatherWidget');
+  el.innerHTML = '<div class="weather-loading">Fetching weather…</div>';
+  try {
+    const lat = 32.9343, lon = -97.0781, city = 'Grapevine';
+    const url  = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weathercode&daily=precipitation_probability_max&temperature_unit=fahrenheit&timezone=America/Chicago&forecast_days=1`;
+    const json = await fetch(url).then(r => r.json());
+    const c    = json.current;
+    weatherData = {
+      temp:      c.temperature_2m,
+      feelsLike: c.apparent_temperature,
+      code:      c.weathercode,
+      city,
+      rainChance: json.daily.precipitation_probability_max[0],
+    };
+    renderWeatherWidget(weatherData);
+    renderToday();
+  } catch(e) {
+    el.innerHTML = `<div class="weather-loading" style="color:var(--text-2)">Weather unavailable — check internet connection</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   OUTFIT GENERATOR
+═══════════════════════════════════════════ */
+
+const TOP_TYPES    = ['Tee','Polo','Shirt'];
+const MID_TYPES    = ['Sweater','Sweatshirt','Hoodie'];
+const OUTER_TYPES  = ['Jacket'];
+const BOTTOM_TYPES = ['Jeans','Pants','Shorts','Sweats'];
+
+function hexToHsl(hex) {
+  let r=parseInt(hex.slice(1,3),16)/255, g=parseInt(hex.slice(3,5),16)/255, b=parseInt(hex.slice(5,7),16)/255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b), l=(max+min)/2;
+  if (max===min) return {h:0,s:0,l:l*100};
+  const d=max-min, s=l>0.5?d/(2-max-min):d/(max+min);
+  let h = max===r ? ((g-b)/d+(g<b?6:0))/6 : max===g ? ((b-r)/d+2)/6 : ((r-g)/d+4)/6;
+  return {h:h*360, s:s*100, l:l*100};
+}
+function lum(hex) { return hexToHsl(hex).l; }
+
+function colorLabel(hex) {
+  const {h,s,l} = hexToHsl(hex);
+  if (l < 12) return 'All Black';
+  if (l > 82) return 'White';
+  if (s < 12) return l<35?'Charcoal':l<55?'Grey':'Light Grey';
+  if (h<25||h>=340) return 'Red';
+  if (h<55)  return 'Earth';
+  if (h<85)  return 'Olive';
+  if (h<155) return 'Forest Green';
+  if (h<200) return 'Teal';
+  if (h<255) return 'Navy';
+  if (h<285) return 'Purple';
+  return 'Blush';
+}
+
+function scoreColor(topHex, bottomHex) {
+  const tL = lum(topHex), bL = lum(bottomHex);
+  if (tL > 55 && bL < 35) return 4;  // light top + dark bottom — best for pale skin
+  if (tL < 35 && bL < 35) return 3;  // tonal dark — mature
+  if (tL > 35 && tL < 58 && bL < 35) return 2; // mid + dark
+  if (tL < 35 && bL > 55) return 1;  // dark top + light bottom — ok
+  if (tL > 55 && bL > 55) return -4; // light + light — avoid
+  return 1;
+}
+
+function scoreAgeUp(pieces) {
+  let s = 0;
+  pieces.forEach(([,item]) => {
+    if (OUTER_TYPES.includes(item.cat))  s += 4;
+    if (item.cat === 'Sweater')          s += 3;
+    if (item.cat === 'Shirt')            s += 3;
+    if (item.cat === 'Polo')             s += 2;
+    if (item.cat === 'Sweatshirt')       s += 1;
+    if (item.cat === 'Hoodie')           s -= 1;
+    if (item.star)                       s += 2;
+    if (item.avoid)                      s -= 4;
+    const n = (item.name||'').toLowerCase();
+    if (n.includes('graphic'))           s -= 2;
+    if (n.includes('basketball'))        s -= 2;
+    if (n.includes('slim') && item.cat==='Jeans') s += 2;
+    if (item.cat==='Jeans' && lum(item.color)<35) s += 2; // dark jeans
+    if (item.cat==='Pants')              s += 2; // cargo etc
+  });
+  return s;
+}
+
+function getSeasonsForOutfit(pieces) {
+  const hasShorts  = pieces.some(([,i]) => i.cat === 'Shorts');
+  const hasJacket  = pieces.some(([,i]) => OUTER_TYPES.includes(i.cat));
+  const hasSweater = pieces.some(([,i]) => ['Sweater','Sweatshirt'].includes(i.cat));
+  if (hasShorts) return ['spring','summer'];
+  if (hasJacket) return ['spring','fall'];
+  if (hasSweater) return ['winter','fall','spring'];
+  return ['winter','spring','fall','summer'];
+}
+
+function getTempRange(pieces) {
+  const hasShorts  = pieces.some(([,i]) => i.cat === 'Shorts');
+  const hasJacket  = pieces.some(([,i]) => OUTER_TYPES.includes(i.cat));
+  const hasSweater = pieces.some(([,i]) => ['Sweater','Sweatshirt','Hoodie'].includes(i.cat));
+  const hasLightTop= pieces.some(([,i]) => TOP_TYPES.includes(i.cat));
+  if (hasShorts && hasSweater)  return {min:50, max:72};
+  if (hasShorts)                return {min:68, max:100};
+  if (hasJacket && hasSweater)  return {min:30, max:62};
+  if (hasJacket)                return {min:40, max:68};
+  if (hasSweater)               return {min:32, max:68};
+  if (hasLightTop)              return {min:52, max:82};
+  return {min:40, max:80};
+}
+
+function nameOutfit(pieces, used) {
+  const outer  = pieces.find(([,i]) => OUTER_TYPES.includes(i.cat));
+  const mid    = pieces.find(([,i]) => MID_TYPES.includes(i.cat));
+  const base   = pieces.find(([,i]) => TOP_TYPES.includes(i.cat));
+  const bottom = pieces.find(([,i]) => BOTTOM_TYPES.includes(i.cat));
+  const hasShorts = bottom && bottom[1].cat === 'Shorts';
+
+  let name;
+  if (outer && mid) {
+    name = `${colorLabel(outer[1].color)} Layer`;
+  } else if (outer && base) {
+    name = `${outer[1].name.split(' ').slice(0,2).join(' ')} Edit`;
+  } else if (mid) {
+    const cl = colorLabel(mid[1].color);
+    const type = mid[1].cat === 'Sweater' ? 'Quarter-Zip' : mid[1].cat === 'Sweatshirt' ? 'Crewneck' : 'Hoodie';
+    name = `${cl} ${type}`;
+  } else if (base && hasShorts) {
+    name = `${colorLabel(base[1].color)} Summer`;
+  } else if (base) {
+    name = `${colorLabel(base[1].color)} & Denim`;
+  } else {
+    name = 'Clean Edit';
+  }
+
+  // Ensure unique name
+  let final = name, n = 2;
+  while (used.has(final)) { final = `${name} ${n++}`; }
+  return final;
+}
+
+function occasionFor(pieces) {
+  const hasJacket  = pieces.some(([,i]) => OUTER_TYPES.includes(i.cat));
+  const hasSweater = pieces.some(([,i]) => i.cat === 'Sweater');
+  const hasShorts  = pieces.some(([,i]) => i.cat === 'Shorts');
+  if (hasJacket)  return 'Going Out';
+  if (hasSweater) return 'Everyday';
+  if (hasShorts)  return 'Casual';
+  return 'Weekend';
+}
+
+function noteFor(pieces, colorScore, ageScore) {
+  const outer  = pieces.find(([,i]) => OUTER_TYPES.includes(i.cat));
+  const mid    = pieces.find(([,i]) => MID_TYPES.includes(i.cat));
+  const bottom = pieces.find(([,i]) => BOTTOM_TYPES.includes(i.cat));
+  const hasStarBottom = bottom && bottom[1].star;
+  const hasStarTop    = (outer||mid) && (outer||mid)[1].star;
+
+  const lines = [];
+  if (outer)         lines.push(`The ${outer[1].name.split(' ').slice(0,3).join(' ')} does the heavy lifting here.`);
+  if (mid && mid[1].cat==='Sweater') lines.push('Quarter-zips over slim dark denim read oldest on you.');
+  if (colorScore >= 4) lines.push('High contrast — light top over dark bottom is sharp on your colouring.');
+  if (colorScore === 3) lines.push('Tonal dark dressing reads effortlessly mature.');
+  if (hasStarBottom) lines.push('Anchored by your most versatile bottom.');
+  if (hasStarTop)    lines.push('Your most age-elevating piece in the mix.');
+  if (!lines.length) lines.push('Clean, considered combination.');
+  return lines.join(' ');
+}
+
+function generateOutfits() {
+  const entries = Object.entries(W).map(([id, item]) => [+id, item]);
+  const tops    = entries.filter(([,i]) => TOP_TYPES.includes(i.cat)    && !i.avoid);
+  const mids    = entries.filter(([,i]) => MID_TYPES.includes(i.cat)    && !i.avoid);
+  const outers  = entries.filter(([,i]) => OUTER_TYPES.includes(i.cat)  && !i.avoid);
+  const bottoms = entries.filter(([,i]) => BOTTOM_TYPES.includes(i.cat) && !i.avoid && i.cat !== 'Sweats');
+
+  if (!bottoms.length || (!tops.length && !mids.length)) return DEFAULT_OUTFITS;
+
+  const candidates = [];
+
+  // Build all combinations: bottom + (mid or top) + optional outer
+  [...mids, ...tops].forEach(top => {
+    bottoms.forEach(bottom => {
+      // No outer
+      const cNoOuter = [top, bottom];
+      const cScore   = scoreColor(top[1].color, bottom[1].color) + scoreAgeUp(cNoOuter);
+      candidates.push({ pieces: cNoOuter, score: cScore });
+
+      // With each outer
+      outers.forEach(outer => {
+        const cOuter = [outer, top, bottom];
+        const oScore = scoreColor(outer[1].color, bottom[1].color) + scoreAgeUp(cOuter);
+        candidates.push({ pieces: cOuter, score: oScore });
+      });
+    });
+  });
+
+  // Sort by score descending, filter negatives
+  candidates.sort((a,b) => b.score - a.score);
+
+  // Deduplicate: limit same top appearing too much, same bottom too much
+  const topCount = {}, bottomCount = {};
+  const MAX_PER_ITEM = 3;
+  const deduped = [];
+  for (const c of candidates) {
+    if (c.score < 2) break;
+    const topId    = (c.pieces.find(([,i]) => [...MID_TYPES,...TOP_TYPES].includes(i.cat))  ||[])[0];
+    const bottomId = (c.pieces.find(([,i]) => BOTTOM_TYPES.includes(i.cat)) ||[])[0];
+    topCount[topId]    = (topCount[topId]    || 0);
+    bottomCount[bottomId] = (bottomCount[bottomId] || 0);
+    if (topCount[topId] >= MAX_PER_ITEM || bottomCount[bottomId] >= MAX_PER_ITEM) continue;
+    topCount[topId]++;
+    bottomCount[bottomId]++;
+    deduped.push(c);
+    if (deduped.length >= 14) break;
+  }
+
+  // Convert to OUTFITS format
+  const usedNames = new Set();
+  return deduped.map((c, idx) => {
+    const { pieces, score } = c;
+    const colorScore = scoreColor(
+      (pieces.find(([,i]) => OUTER_TYPES.includes(i.cat)) || pieces.find(([,i]) => [...MID_TYPES,...TOP_TYPES].includes(i.cat)))[1].color,
+      pieces.find(([,i]) => BOTTOM_TYPES.includes(i.cat))[1].color
+    );
+    const ageScore  = scoreAgeUp(pieces);
+    const seasons   = getSeasonsForOutfit(pieces);
+    const {min,max} = getTempRange(pieces);
+    const name      = nameOutfit(pieces, usedNames);
+    usedNames.add(name);
+    return {
+      id:        idx + 100,
+      name,
+      items:     pieces.map(([id]) => id),
+      ageRating: score >= 9 ? 2 : 1,
+      occasion:  occasionFor(pieces),
+      seasons,
+      tempMin:   min,
+      tempMax:   max,
+      note:      noteFor(pieces, colorScore, ageScore),
+      generated: true,
+    };
+  });
+}
+
+function rebuildOutfits() {
+  OUTFITS = generateOutfits();
+  saveOutfits(OUTFITS);
+  renderOutfitsList();
+  renderToday();
+  // Update count badge on wardrobe
+  const el = document.getElementById('outfitsBadge');
+  if (el) el.textContent = OUTFITS.length;
+}
+
+/* ═══════════════════════════════════════════
+   WARDROBE MANAGEMENT
+═══════════════════════════════════════════ */
+
+const CAT_GROUPS = {
+  'Tops':        ['Sweater','Sweatshirt','Hoodie','Tee','Polo','Jacket','Shirt'],
+  'Bottoms':     ['Jeans','Pants','Shorts','Sweats'],
+  'Shoes':       ['Shoes','Boots','Sneakers','Loafers','Sandals'],
+  'Accessories': ['Belt','Watch','Hat','Bag','Jewellery','Accessory'],
+  'Other':       [],
+};
+
+function groupItems() {
+  const groups = { Tops: [], Bottoms: [], Shoes: [], Accessories: [], Other: [] };
+  Object.entries(W).forEach(([id, item]) => {
+    if      (CAT_GROUPS.Tops.includes(item.cat))        groups.Tops.push([+id, item]);
+    else if (CAT_GROUPS.Bottoms.includes(item.cat))     groups.Bottoms.push([+id, item]);
+    else if (CAT_GROUPS.Shoes.includes(item.cat))       groups.Shoes.push([+id, item]);
+    else if (CAT_GROUPS.Accessories.includes(item.cat)) groups.Accessories.push([+id, item]);
+    else groups.Other.push([+id, item]);
+  });
+  return groups;
+}
+
+function renderWardrobe() {
+  const count = Object.keys(W).length;
+  document.getElementById('wardrobeCount').textContent = `${count} items`;
+  const groups = groupItems();
+  let html = `
+    <button class="wrd-add-btn" onclick="toggleAddForm()">+ Add New Item</button>
+    <div class="wrd-form" id="addForm">
+      <div class="wrd-form-title">New Item</div>
+      <div class="form-row">
+        <label class="form-label">Name *</label>
+        <input class="form-input" id="f-name" placeholder="e.g. Navy Oxford Shirt" type="text">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Colour *</label>
+        <div class="form-color-row">
+          <input class="form-color-pick" id="f-color" type="color" value="#888888">
+          <span style="font-size:13px;color:var(--text-2)">Tap to pick the closest colour</span>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Type *</label>
+        <select class="form-select" id="f-cat">
+          <optgroup label="Tops">
+            <option value="Tee">Tee</option>
+            <option value="Sweater">Sweater</option>
+            <option value="Sweatshirt">Sweatshirt</option>
+            <option value="Hoodie">Hoodie</option>
+            <option value="Polo">Polo</option>
+            <option value="Shirt">Shirt</option>
+            <option value="Jacket">Jacket</option>
+          </optgroup>
+          <optgroup label="Bottoms">
+            <option value="Jeans">Jeans</option>
+            <option value="Pants">Pants</option>
+            <option value="Shorts">Shorts</option>
+            <option value="Sweats">Sweats</option>
+          </optgroup>
+          <optgroup label="Shoes">
+            <option value="Sneakers">Sneakers</option>
+            <option value="Boots">Boots</option>
+            <option value="Loafers">Loafers</option>
+            <option value="Shoes">Shoes</option>
+            <option value="Sandals">Sandals</option>
+          </optgroup>
+          <optgroup label="Accessories">
+            <option value="Belt">Belt</option>
+            <option value="Watch">Watch</option>
+            <option value="Hat">Hat</option>
+            <option value="Bag">Bag</option>
+            <option value="Jewellery">Jewellery</option>
+            <option value="Accessory">Accessory</option>
+          </optgroup>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Brand (optional)</label>
+        <input class="form-input" id="f-brand" placeholder="e.g. Uniqlo" type="text">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="toggleAddForm()">Cancel</button>
+        <button class="btn btn-primary" onclick="addItem()">Add to Wardrobe</button>
+      </div>
+    </div>`;
+
+  for (const [group, items] of Object.entries(groups)) {
+    if (!items.length) continue;
+    items.sort((a,b) => a[0]-b[0]);
+    html += `<div class="wrd-group-label">${group}</div>`;
+    items.forEach(([id, item]) => {
+      const tags = [
+        item.star  ? `<span class="wrd-tag wrd-tag-star">★ Anchor</span>` : '',
+        item.avoid ? `<span class="wrd-tag wrd-tag-avoid">Avoid</span>` : '',
+        item.brand ? `<span class="wrd-tag">${item.brand}</span>` : '',
+      ].filter(Boolean).join('');
+      html += `
+        <div class="wrd-item" id="wrd-${id}">
+          <div class="wrd-swatch" style="background:${item.color}"></div>
+          <div class="wrd-info">
+            <div class="wrd-name">#${id} — ${item.name}</div>
+            <div class="wrd-meta">${item.cat}</div>
+            ${tags ? `<div class="wrd-tags">${tags}</div>` : ''}
+          </div>
+          <button class="wrd-del" onclick="removeItem(${id})" title="Remove">✕</button>
+        </div>`;
+    });
+  }
+
+  document.getElementById('wardrobeList').innerHTML = html;
+}
+
+function removeItem(id) {
+  if (!confirm(`Remove #${id} — ${W[id]?.name}?`)) return;
+  delete W[id];
+  saveWardrobe();
+  rebuildOutfits();
+  renderWardrobe();
+}
+
+function toggleAddForm() {
+  const form = document.getElementById('addForm');
+  form.classList.toggle('open');
+  if (form.classList.contains('open')) {
+    document.getElementById('f-name').focus();
+  }
+}
+
+function addItem() {
+  const name  = document.getElementById('f-name').value.trim();
+  const color = document.getElementById('f-color').value;
+  const cat   = document.getElementById('f-cat').value;
+  const brand = document.getElementById('f-brand').value.trim();
+
+  if (!name) { document.getElementById('f-name').focus(); return; }
+
+  // Pick next available ID
+  const nextId = Math.max(0, ...Object.keys(W).map(Number)) + 1;
+  W[nextId] = { name, color, cat, ...(brand ? { brand } : {}) };
+  saveWardrobe();
+  rebuildOutfits();
+
+  // Reset form
+  document.getElementById('f-name').value  = '';
+  document.getElementById('f-brand').value = '';
+  document.getElementById('f-color').value = '#888888';
+  document.getElementById('addForm').classList.remove('open');
+
+  renderWardrobe();
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+
+// Generate outfits on first run (no saved outfits yet)
+if (!loadOutfits()) rebuildOutfits();
+
+renderHeader();
+renderToday();
+renderOutfitsList();
+renderNotes();
+renderWardrobe();
+fetchWeather();
+</script>
+</body>
+</html>
