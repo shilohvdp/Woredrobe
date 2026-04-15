@@ -650,6 +650,23 @@
       -webkit-tap-highlight-color: transparent;
     }
     .wrd-del:active { border-color: #b07070; color: #b07070; }
+    .wrd-edit-btn {
+      background: none;
+      border: 1px solid var(--border-2);
+      color: var(--text-2);
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrd-edit-btn:active { border-color: var(--accent); color: var(--accent); }
 
     /* Inline edit form */
     .wrd-edit-form {
@@ -1845,20 +1862,19 @@ function renderWardrobe() {
         : `<div class="wrd-thumb-empty" onclick="triggerPhotoUpload(${id})">📷</div>`;
       const isEditing = editingItemId === id;
       html += `
-        <div class="wrd-item" id="wrd-${id}" onclick="toggleEditItem(event,${id})" style="cursor:pointer">
+        <div class="wrd-item" id="wrd-${id}">
           ${thumbHtml}
           <div class="wrd-info">
             <div class="wrd-name">#${id} — ${item.name}</div>
             <div class="wrd-meta">${item.cat}${item.brand ? ' · ' + item.brand : ''}</div>
             ${tags ? `<div class="wrd-tags">${tags}</div>` : ''}
           </div>
-          <span style="font-size:11px;color:var(--text-3);flex-shrink:0;padding-left:4px">${isEditing ? '▲' : '▼'}</span>
-          <button class="wrd-del" onclick="event.stopPropagation();removeItem(${id})">✕</button>
+          <button class="wrd-edit-btn" onclick="toggleEditItem(${id})">✎</button>
+          <button class="wrd-del" onclick="removeItem(${id})">✕</button>
         </div>
         <div class="wrd-edit-form ${isEditing ? 'open' : ''}" id="edit-${id}">
           <div class="wrd-edit-row">
-            <input class="wrd-color-pick" type="color" id="ec-${id}" value="${item.color}"
-              onchange="document.getElementById('ec-preview-${id}').style.background=this.value">
+            <input class="wrd-color-pick" type="color" id="ec-${id}" value="${item.color}">
             <input class="wrd-edit-input" type="text" id="en-${id}" value="${item.name}" placeholder="Item name">
           </div>
           <div class="wrd-edit-actions">
@@ -1872,9 +1888,7 @@ function renderWardrobe() {
   document.getElementById('wardrobeList').innerHTML = html;
 }
 
-function toggleEditItem(e, id) {
-  // Don't fire when tapping the photo or delete button
-  if (e.target.closest('.wrd-del') || e.target.closest('.wrd-thumb') || e.target.closest('.wrd-thumb-empty')) return;
+function toggleEditItem(id) {
   editingItemId = (editingItemId === id) ? null : id;
   renderWardrobe();
   if (editingItemId === id) {
