@@ -651,6 +651,66 @@
     }
     .wrd-del:active { border-color: #b07070; color: #b07070; }
 
+    /* Photo thumbnail in wardrobe */
+    .wrd-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      object-fit: cover;
+      border: 1px solid var(--border-2);
+      cursor: pointer;
+    }
+    .wrd-thumb-empty {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      border: 1px dashed var(--border-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      color: var(--text-3);
+      transition: border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrd-thumb-empty:active { border-color: var(--accent); color: var(--accent); }
+
+    /* Outfit photo strip on Today card */
+    .outfit-photos {
+      display: flex;
+      gap: 8px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .outfit-photos::-webkit-scrollbar { display: none; }
+    .outfit-photo {
+      width: 72px;
+      height: 72px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1px solid var(--border-2);
+    }
+    .outfit-photo-swatch {
+      width: 72px;
+      height: 72px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: flex-end;
+      padding: 5px;
+      font-size: 9px;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 0.04em;
+      overflow: hidden;
+    }
+
     /* Add Item form */
     .wrd-add-btn {
       width: 100%;
@@ -832,6 +892,8 @@
   </style>
 </head>
 <body>
+<input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+
 <div id="lockScreen">
   <div id="lockForm">
     <div class="lock-logo">Woredrobe</div>
@@ -1205,8 +1267,19 @@ function buildOutfitCard(outfit, locked) {
       </div>`;
   }).join('');
 
+  // Photo strip — show photos for items that have them, fallback to colour swatch
+  const photoItems = outfit.items.map(id => {
+    const item = W[id]; if (!item) return '';
+    const photo = photoCache[id];
+    return photo
+      ? `<img src="${photo}" class="outfit-photo" title="${item.name}">`
+      : `<div class="outfit-photo-swatch" style="background:${item.color}">${item.cat}</div>`;
+  }).join('');
+  const photoStrip = photoItems ? `<div class="outfit-photos">${photoItems}</div>` : '';
+
   return `
     <div class="outfit-card ${locked ? 'is-locked' : ''}">
+      ${photoStrip}
       <div class="card-top">
         <div class="card-badges">
           <span class="badge ${ageCls}">${ageLabel}</span>
@@ -1833,12 +1906,16 @@ function renderWardrobe() {
         item.avoid ? `<span class="wrd-tag wrd-tag-avoid">Avoid</span>` : '',
         item.brand ? `<span class="wrd-tag">${item.brand}</span>` : '',
       ].filter(Boolean).join('');
+      const photo = photoCache[id];
+      const thumbHtml = photo
+        ? `<img src="${photo}" class="wrd-thumb" onclick="triggerPhotoUpload(${id})" title="Tap to change photo">`
+        : `<div class="wrd-thumb-empty" onclick="triggerPhotoUpload(${id})" title="Add photo">📷</div>`;
       html += `
         <div class="wrd-item" id="wrd-${id}">
-          <div class="wrd-swatch" style="background:${item.color}"></div>
+          ${thumbHtml}
           <div class="wrd-info">
             <div class="wrd-name">#${id} — ${item.name}</div>
-            <div class="wrd-meta">${item.cat}</div>
+            <div class="wrd-meta">${item.cat}${item.brand ? ' · ' + item.brand : ''}</div>
             ${tags ? `<div class="wrd-tags">${tags}</div>` : ''}
           </div>
           <button class="wrd-del" onclick="removeItem(${id})" title="Remove">✕</button>
@@ -1970,17 +2047,113 @@ function initLock() {
   setTimeout(() => document.getElementById('lockInput').focus(), 120);
 }
 
+/* ═══════════════════════════════════════════
+   PHOTO STORAGE (IndexedDB)
+═══════════════════════════════════════════ */
+
+let photoDB   = null;
+let photoCache = {}; // { itemId: dataUrl }
+let pendingPhotoId = null;
+
+function openPhotoDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('woredrobe_photos', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('photos');
+    req.onsuccess  = e => { photoDB = e.target.result; resolve(); };
+    req.onerror    = reject;
+  });
+}
+
+function savePhoto(itemId, dataUrl) {
+  return new Promise((resolve, reject) => {
+    const tx = photoDB.transaction('photos','readwrite');
+    tx.objectStore('photos').put(dataUrl, itemId);
+    tx.oncomplete = resolve;
+    tx.onerror    = reject;
+  });
+}
+
+function deletePhotoFromDB(itemId) {
+  return new Promise((resolve, reject) => {
+    const tx = photoDB.transaction('photos','readwrite');
+    tx.objectStore('photos').delete(itemId);
+    tx.oncomplete = resolve;
+    tx.onerror    = reject;
+  });
+}
+
+function loadAllPhotos() {
+  return new Promise(resolve => {
+    const tx  = photoDB.transaction('photos','readonly');
+    const req = tx.objectStore('photos').openCursor();
+    req.onsuccess = e => {
+      const cur = e.target.result;
+      if (cur) { photoCache[cur.key] = cur.value; cur.continue(); }
+      else resolve(Object.keys(photoCache).length > 0);
+    };
+    req.onerror = () => resolve(false);
+  });
+}
+
+function resizeImage(file, maxPx = 600) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const scale  = Math.min(maxPx / img.width, maxPx / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width  = img.width  * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function triggerPhotoUpload(itemId) {
+  pendingPhotoId = itemId;
+  document.getElementById('photoInput').click();
+}
+
+async function handlePhotoUpload(e) {
+  const file = e.target.files[0];
+  if (!file || pendingPhotoId == null) return;
+  const dataUrl = await resizeImage(file);
+  await savePhoto(pendingPhotoId, dataUrl);
+  photoCache[pendingPhotoId] = dataUrl;
+  pendingPhotoId = null;
+  e.target.value = '';
+  renderWardrobe();
+  renderToday();  // refresh outfit card photos
+}
+
+async function removePhoto(itemId) {
+  await deletePhotoFromDB(itemId);
+  delete photoCache[itemId];
+  renderWardrobe();
+  renderToday();
+}
+
 initLock();
 
 // Generate outfits on first run (no saved outfits yet)
 if (!loadOutfits()) rebuildOutfits();
 
-renderHeader();
-renderToday();
-renderOutfitsList();
-renderNotes();
-renderWardrobe();
-fetchWeather();
+// Init photos then render everything
+openPhotoDB()
+  .then(() => loadAllPhotos())
+  .finally(() => {
+    renderHeader();
+    renderToday();
+    renderOutfitsList();
+    renderNotes();
+    renderWardrobe();
+    fetchWeather();
+  });
 </script>
 </body>
 </html>
