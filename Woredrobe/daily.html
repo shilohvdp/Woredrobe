@@ -651,6 +651,48 @@
     }
     .wrd-del:active { border-color: #b07070; color: #b07070; }
 
+    /* Inline edit form */
+    .wrd-edit-form {
+      display: none;
+      background: var(--surface-2);
+      border-radius: 6px;
+      padding: 14px;
+      margin: 0 0 2px;
+      border: 1px solid var(--border-2);
+    }
+    .wrd-edit-form.open { display: block; }
+    .wrd-edit-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .wrd-edit-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: 4px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-family: var(--font-b);
+      font-size: 14px;
+      outline: none;
+    }
+    .wrd-edit-input:focus { border-color: var(--accent); }
+    .wrd-color-pick {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2px solid var(--border-2);
+      padding: 2px;
+      background: none;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .wrd-color-pick::-webkit-color-swatch-wrapper { padding: 0; border-radius: 50%; }
+    .wrd-color-pick::-webkit-color-swatch { border: none; border-radius: 50%; }
+    .wrd-edit-actions { display: flex; gap: 8px; }
+
     /* Photo thumbnail in wardrobe */
     .wrd-thumb {
       width: 44px;
@@ -1048,6 +1090,7 @@ let OUTFITS = loadOutfits() || DEFAULT_OUTFITS;
 const STORE_KEY = 'woredrobe_v2';
 let outfitsFilter = 'season';
 let expandedOutfitId = null;
+let editingItemId = null;
 let weatherData = null; // { temp, feelsLike, desc, icon, code }
 
 function store() {
@@ -1798,22 +1841,62 @@ function renderWardrobe() {
       ].filter(Boolean).join('');
       const photo = photoCache[id];
       const thumbHtml = photo
-        ? `<img src="${photo}" class="wrd-thumb" onclick="triggerPhotoUpload(${id})" title="Tap to change photo">`
-        : `<div class="wrd-thumb-empty" onclick="triggerPhotoUpload(${id})" title="Add photo">📷</div>`;
+        ? `<img src="${photo}" class="wrd-thumb" onclick="triggerPhotoUpload(${id})">`
+        : `<div class="wrd-thumb-empty" onclick="triggerPhotoUpload(${id})">📷</div>`;
+      const isEditing = editingItemId === id;
       html += `
-        <div class="wrd-item" id="wrd-${id}">
+        <div class="wrd-item" id="wrd-${id}" onclick="toggleEditItem(event,${id})" style="cursor:pointer">
           ${thumbHtml}
           <div class="wrd-info">
             <div class="wrd-name">#${id} — ${item.name}</div>
             <div class="wrd-meta">${item.cat}${item.brand ? ' · ' + item.brand : ''}</div>
             ${tags ? `<div class="wrd-tags">${tags}</div>` : ''}
           </div>
-          <button class="wrd-del" onclick="removeItem(${id})" title="Remove">✕</button>
+          <span style="font-size:11px;color:var(--text-3);flex-shrink:0;padding-left:4px">${isEditing ? '▲' : '▼'}</span>
+          <button class="wrd-del" onclick="event.stopPropagation();removeItem(${id})">✕</button>
+        </div>
+        <div class="wrd-edit-form ${isEditing ? 'open' : ''}" id="edit-${id}">
+          <div class="wrd-edit-row">
+            <input class="wrd-color-pick" type="color" id="ec-${id}" value="${item.color}"
+              onchange="document.getElementById('ec-preview-${id}').style.background=this.value">
+            <input class="wrd-edit-input" type="text" id="en-${id}" value="${item.name}" placeholder="Item name">
+          </div>
+          <div class="wrd-edit-actions">
+            <button class="btn btn-outline" style="font-size:10px;padding:9px" onclick="cancelEdit(${id})">Cancel</button>
+            <button class="btn btn-primary" style="font-size:10px;padding:9px" onclick="saveItemEdit(${id})">Save</button>
+          </div>
         </div>`;
     });
   }
 
   document.getElementById('wardrobeList').innerHTML = html;
+}
+
+function toggleEditItem(e, id) {
+  // Don't fire when tapping the photo or delete button
+  if (e.target.closest('.wrd-del') || e.target.closest('.wrd-thumb') || e.target.closest('.wrd-thumb-empty')) return;
+  editingItemId = (editingItemId === id) ? null : id;
+  renderWardrobe();
+  if (editingItemId === id) {
+    setTimeout(() => document.getElementById(`en-${id}`)?.focus(), 50);
+  }
+}
+
+function cancelEdit(id) {
+  editingItemId = null;
+  renderWardrobe();
+}
+
+function saveItemEdit(id) {
+  const name  = document.getElementById(`en-${id}`)?.value.trim();
+  const color = document.getElementById(`ec-${id}`)?.value;
+  if (!name) return;
+  W[id].name  = name;
+  W[id].color = color;
+  saveWardrobe();
+  editingItemId = null;
+  renderWardrobe();
+  renderToday();
 }
 
 function removeItem(id) {
