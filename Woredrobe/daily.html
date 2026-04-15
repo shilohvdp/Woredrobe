@@ -1209,7 +1209,6 @@ function buildOutfitCard(outfit, locked) {
     const star  = item.star  ? `<span class="item-star">★</span>` : '';
     return `
       <div class="item-row">
-        <span class="item-num">${id}</span>
         <span class="item-swatch" style="background:${item.color}"></span>
         <span class="item-label">${item.name} ${brand}</span>
         ${star}
@@ -1310,7 +1309,6 @@ function renderOutfitsList() {
       const brand = item.brand ? `<span class="item-brand">${item.brand}</span>` : '';
       const star  = item.star  ? `<span class="item-star">★</span>` : '';
       return `<div class="item-row">
-        <span class="item-num">${id}</span>
         <span class="item-swatch" style="background:${item.color}"></span>
         <span class="item-label">${item.name} ${brand}</span>
         ${star}
@@ -1865,7 +1863,7 @@ function renderWardrobe() {
         <div class="wrd-item" id="wrd-${id}">
           ${thumbHtml}
           <div class="wrd-info">
-            <div class="wrd-name">#${id} — ${item.name}</div>
+            <div class="wrd-name">${item.name}</div>
             <div class="wrd-meta">${item.cat}${item.brand ? ' · ' + item.brand : ''}</div>
             ${tags ? `<div class="wrd-tags">${tags}</div>` : ''}
           </div>
