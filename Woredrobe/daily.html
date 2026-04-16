@@ -993,7 +993,9 @@ function loadWardrobe() {
     const saved = localStorage.getItem(WSTORE_KEY);
     const w = saved ? JSON.parse(saved) : { ...DEFAULT_WARDROBE };
     // migrate: merge Sweatshirt into Sweater
-    Object.values(w).forEach(item => { if (item.cat === 'Sweatshirt') item.cat = 'Sweater'; });
+    let migrated = false;
+    Object.values(w).forEach(item => { if (item.cat === 'Sweatshirt') { item.cat = 'Sweater'; migrated = true; } });
+    if (migrated) localStorage.setItem(WSTORE_KEY, JSON.stringify(w));
     return w;
   } catch(e) { return { ...DEFAULT_WARDROBE }; }
 }
