@@ -747,6 +747,48 @@
     }
     .wrd-thumb-empty:active { border-color: var(--accent); color: var(--accent); }
 
+    /* Photo lightbox */
+    .photo-lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .photo-lightbox.open { display: flex; }
+    .photo-lightbox img {
+      max-width: 92vw;
+      max-height: 72vh;
+      border-radius: 10px;
+      object-fit: contain;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+    .lightbox-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: rgba(255,255,255,0.12);
+      border: none;
+      color: #fff;
+      font-size: 22px;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     /* Outfit photo strip on Today card */
     .outfit-photos {
       display: flex;
@@ -865,6 +907,15 @@
 </head>
 <body>
 <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+
+<!-- Photo lightbox -->
+<div class="photo-lightbox" id="photoLightbox" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightboxBtn()">✕</button>
+  <img id="lightboxImg" src="" alt="">
+  <div class="lightbox-actions">
+    <button class="btn btn-outline" style="font-size:13px" onclick="lightboxChangePhoto()">Change Photo</button>
+  </div>
+</div>
 
 <div id="app">
 
@@ -1913,7 +1964,7 @@ function renderWardrobe() {
       ].filter(Boolean).join('');
       const photo = photoCache[id];
       const thumbHtml = photo
-        ? `<img src="${photo}" class="wrd-thumb" onclick="triggerPhotoUpload(${id})">`
+        ? `<img src="${photo}" class="wrd-thumb" onclick="openPhotoLightbox(${id})">`
         : `<div class="wrd-thumb-empty" onclick="triggerPhotoUpload(${id})">📷</div>`;
       const isEditing = editingItemId === id;
       html += `
@@ -2111,6 +2162,29 @@ function resizeImage(file, maxPx = 600) {
     };
     reader.readAsDataURL(file);
   });
+}
+
+let lightboxItemId = null;
+function openPhotoLightbox(id) {
+  const photo = photoCache[id];
+  if (!photo) return;
+  lightboxItemId = id;
+  document.getElementById('lightboxImg').src = photo;
+  document.getElementById('photoLightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightboxBtn() {
+  document.getElementById('photoLightbox').classList.remove('open');
+  document.body.style.overflow = '';
+  lightboxItemId = null;
+}
+function closeLightbox(e) {
+  if (e.target === document.getElementById('photoLightbox')) closeLightboxBtn();
+}
+function lightboxChangePhoto() {
+  if (lightboxItemId == null) return;
+  closeLightboxBtn();
+  triggerPhotoUpload(lightboxItemId);
 }
 
 function triggerPhotoUpload(itemId) {
