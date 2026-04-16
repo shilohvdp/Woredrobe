@@ -514,7 +514,7 @@
       margin-bottom: 16px;
     }
     .item-picker {
-      max-height: 240px;
+      max-height: 320px;
       overflow-y: auto;
       border: 1px solid var(--border-2);
       border-radius: 6px;
@@ -525,23 +525,45 @@
       letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--accent);
-      padding: 8px 12px 4px;
+      padding: 10px 14px 6px;
       background: var(--surface-2);
     }
     .item-picker-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 9px 12px;
+      gap: 12px;
+      padding: 14px;
       border-top: 1px solid var(--border);
       cursor: pointer;
+      min-height: 52px;
       -webkit-tap-highlight-color: transparent;
+      transition: background 0.12s;
+      user-select: none;
     }
-    .item-picker-row:first-of-type { border-top: none; }
-    .item-picker-row input[type=checkbox] { width:16px; height:16px; accent-color: var(--accent); flex-shrink:0; }
-    .item-picker-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-    .item-picker-name { font-size: 13px; color: var(--text); flex: 1; }
-    .item-picker-cat { font-size: 10px; color: var(--text-3); }
+    .item-picker-row.selected {
+      background: var(--accent-dim);
+    }
+    .item-picker-check {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--border-2);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: transparent;
+      transition: all 0.12s;
+    }
+    .item-picker-row.selected .item-picker-check {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #1a1610;
+    }
+    .item-picker-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .item-picker-name { font-size: 14px; color: var(--text); flex: 1; }
+    .item-picker-cat { font-size: 11px; color: var(--text-3); }
 
     /* Expanded outfit card in list */
     .ol-expanded {
@@ -1435,12 +1457,12 @@ function renderOutfitFormContainer() {
     pickerHtml += `<div class="item-picker-group">${g}</div>`;
     ids.forEach(id => {
       const item = W[id]; if (!item) return;
-      pickerHtml += `<label class="item-picker-row">
-        <input type="checkbox" name="outfit-item" value="${id}">
+      pickerHtml += `<div class="item-picker-row" data-outfit-item="${id}" onclick="toggleOutfitItem(${id})">
+        <span class="item-picker-check">✓</span>
         <span class="item-picker-dot" style="background:${item.color}"></span>
         <span class="item-picker-name">${item.name}</span>
         <span class="item-picker-cat">${item.cat}</span>
-      </label>`;
+      </div>`;
     });
   });
   document.getElementById('outfitFormContainer').innerHTML = `
@@ -1518,11 +1540,25 @@ function toggleExpand(id) {
   renderOutfitsList();
 }
 
+let selectedOutfitItems = new Set();
+
+function toggleOutfitItem(id) {
+  if (selectedOutfitItems.has(id)) {
+    selectedOutfitItems.delete(id);
+  } else {
+    selectedOutfitItems.add(id);
+  }
+  const row = document.querySelector(`[data-outfit-item="${id}"]`);
+  if (row) row.classList.toggle('selected', selectedOutfitItems.has(id));
+}
+
 function toggleOutfitForm() {
   const form = document.getElementById('outfitForm');
   if (!form) return;
+  const opening = !form.classList.contains('open');
   form.classList.toggle('open');
-  if (form.classList.contains('open')) {
+  if (opening) {
+    selectedOutfitItems.clear();
     setTimeout(() => document.getElementById('of-name')?.focus(), 50);
   }
 }
@@ -1530,9 +1566,8 @@ function toggleOutfitForm() {
 function createOutfit() {
   const name = document.getElementById('of-name')?.value.trim();
   if (!name) { alert('Please enter a name.'); return; }
-  const checked = [...document.querySelectorAll('input[name="outfit-item"]:checked')];
-  if (!checked.length) { alert('Select at least one item.'); return; }
-  const itemIds = checked.map(c => +c.value);
+  if (!selectedOutfitItems.size) { alert('Select at least one item.'); return; }
+  const itemIds = [...selectedOutfitItems];
   const pieces  = itemIds.map(id => [id, W[id]]).filter(([,i]) => i);
   const seasons  = getSeasonsForOutfit(pieces);
   const tempRange = getTempRange(pieces);
@@ -1545,6 +1580,7 @@ function createOutfit() {
     note: '', generated: false
   });
   saveOutfits(OUTFITS);
+  selectedOutfitItems.clear();
   renderOutfitsList();
 }
 
