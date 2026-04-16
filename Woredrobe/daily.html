@@ -1500,8 +1500,17 @@ function setFilter(f, btn) {
 
 function openCreateOutfitModal() {
   selectedOutfitItems.clear();
-  // Build item list sorted by section
-  const entries = Object.entries(W).sort((a, b) => +a[0] - +b[0]);
+  // Build item list sorted by section then group then id
+  const SECTION_ORDER = ['Tops','Bottoms','Shoes','Accessories','Other'];
+  const entries = Object.entries(W).sort((a, b) => {
+    const sA = SECTION_ORDER.indexOf(GROUP_SECTION[getDisplayGroup(a[1])] || 'Other');
+    const sB = SECTION_ORDER.indexOf(GROUP_SECTION[getDisplayGroup(b[1])] || 'Other');
+    if (sA !== sB) return sA - sB;
+    const gA = GROUP_ORDER.indexOf(getDisplayGroup(a[1]));
+    const gB = GROUP_ORDER.indexOf(getDisplayGroup(b[1]));
+    if (gA !== gB) return gA - gB;
+    return +a[0] - +b[0];
+  });
   let html = '';
   let lastSection = null;
   entries.forEach(([idStr, item]) => {
@@ -1608,7 +1617,7 @@ function saveNewOutfit() {
   const pieces  = itemIds.map(id => [id, W[id]]).filter(([,i]) => i);
   const seasons  = getSeasonsForOutfit(pieces);
   const tempRange = getTempRange(pieces);
-  const occasion  = getOccasion(pieces);
+  const occasion  = occasionFor(pieces);
   const newId = Math.max(0, ...OUTFITS.map(o => o.id)) + 1;
   OUTFITS.push({
     id: newId, name, items: itemIds,
