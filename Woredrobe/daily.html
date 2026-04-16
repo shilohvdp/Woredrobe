@@ -1455,8 +1455,8 @@ function renderOutfitFormContainer() {
   GROUP_ORDER.forEach(g => {
     const ids = groups[g]; if (!ids || !ids.length) return;
     pickerHtml += `<div class="item-picker-group">${g}</div>`;
-    ids.forEach(id => {
-      const item = W[id]; if (!item) return;
+    ids.forEach(([id, item]) => {
+      if (!item) return;
       pickerHtml += `<div class="item-picker-row" data-outfit-item="${id}" onclick="toggleOutfitItem(${id})">
         <span class="item-picker-check">✓</span>
         <span class="item-picker-dot" style="background:${item.color}"></span>
