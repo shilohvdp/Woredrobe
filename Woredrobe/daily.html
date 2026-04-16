@@ -1448,26 +1448,33 @@ function setFilter(f, btn) {
 }
 
 function renderOutfitFormContainer() {
-  const open = document.getElementById('outfitFormContainer')?.querySelector('.outfit-form.open');
-  const wasOpen = !!open;
-  const groups = groupItems();
+  const wasOpen = !!document.getElementById('outfitFormContainer')?.querySelector('.outfit-form.open');
+
+  // Build picker: sort items by id, group by section
+  const entries = Object.entries(W).sort((a, b) => +a[0] - +b[0]);
   let pickerHtml = '';
-  GROUP_ORDER.forEach(g => {
-    const ids = groups[g]; if (!ids || !ids.length) return;
-    pickerHtml += `<div class="item-picker-group">${g}</div>`;
-    ids.forEach(([id, item]) => {
-      if (!item) return;
-      pickerHtml += `<div class="item-picker-row" data-outfit-item="${id}" onclick="toggleOutfitItem(${id})">
-        <span class="item-picker-check">✓</span>
-        <span class="item-picker-dot" style="background:${item.color}"></span>
-        <span class="item-picker-name">${item.name}</span>
-        <span class="item-picker-cat">${item.cat}</span>
-      </div>`;
-    });
+  let lastSection = null;
+  entries.forEach(([idStr, item]) => {
+    if (!item) return;
+    const id = +idStr;
+    const group = getDisplayGroup(item);
+    const section = GROUP_SECTION[group] || 'Other';
+    if (section !== lastSection) {
+      lastSection = section;
+      pickerHtml += `<div class="item-picker-group">${section}</div>`;
+    }
+    const sel = selectedOutfitItems.has(id) ? ' selected' : '';
+    pickerHtml += `<div class="item-picker-row${sel}" data-outfit-item="${id}" onclick="toggleOutfitItem(${id})">
+      <span class="item-picker-check">✓</span>
+      <span class="item-picker-dot" style="background:${item.color}"></span>
+      <span class="item-picker-name">${item.name}</span>
+      <span class="item-picker-cat">${item.cat}</span>
+    </div>`;
   });
+
   document.getElementById('outfitFormContainer').innerHTML = `
     <button class="wrd-add-btn" onclick="toggleOutfitForm()">+ Create Outfit</button>
-    <div class="outfit-form${wasOpen?' open':''}" id="outfitForm">
+    <div class="outfit-form${wasOpen ? ' open' : ''}" id="outfitForm">
       <div class="outfit-form-title">New Outfit</div>
       <div class="form-row">
         <label class="form-label">Name *</label>
@@ -1688,6 +1695,8 @@ function navigateTo(viewId, btn) {
   document.getElementById('view-' + viewId).classList.add('active');
   btn.classList.add('active');
   document.getElementById('views').scrollTop = 0;
+  if (viewId === 'outfits') renderOutfitsList();
+  if (viewId === 'wardrobe') renderWardrobe();
 }
 
 /* ═══════════════════════════════════════════
