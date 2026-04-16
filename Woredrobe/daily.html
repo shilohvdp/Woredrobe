@@ -497,73 +497,6 @@
     }
     .ol-del:active { color: #c0392b; }
 
-    /* Create outfit form */
-    .outfit-form {
-      background: var(--surface);
-      border: 1px solid var(--border-2);
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 16px;
-      display: none;
-    }
-    .outfit-form.open { display: block; }
-    .outfit-form-title {
-      font-family: var(--font-d);
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 16px;
-    }
-    .item-picker {
-      max-height: 320px;
-      overflow-y: auto;
-      border: 1px solid var(--border-2);
-      border-radius: 6px;
-      margin-bottom: 14px;
-    }
-    .item-picker-group {
-      font-size: 9px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--accent);
-      padding: 10px 14px 6px;
-      background: var(--surface-2);
-    }
-    .item-picker-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px;
-      border-top: 1px solid var(--border);
-      cursor: pointer;
-      min-height: 52px;
-      -webkit-tap-highlight-color: transparent;
-      transition: background 0.12s;
-      user-select: none;
-    }
-    .item-picker-row.selected {
-      background: var(--accent-dim);
-    }
-    .item-picker-check {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      border: 2px solid var(--border-2);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      color: transparent;
-      transition: all 0.12s;
-    }
-    .item-picker-row.selected .item-picker-check {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #1a1610;
-    }
-    .item-picker-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .item-picker-name { font-size: 14px; color: var(--text); flex: 1; }
-    .item-picker-cat { font-size: 11px; color: var(--text-3); }
 
     /* Expanded outfit card in list */
     .ol-expanded {
@@ -839,6 +772,106 @@
     }
     .wrd-thumb-empty:active { border-color: var(--accent); color: var(--accent); }
 
+    /* ── Create Outfit bottom sheet ── */
+    .co-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 8000;
+    }
+    .co-backdrop.open { display: block; }
+    .co-sheet {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-radius: 16px 16px 0 0;
+      border-top: 1px solid var(--border-2);
+      z-index: 8001;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+    }
+    .co-sheet.open { transform: translateY(0); }
+    .co-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .co-title {
+      font-family: var(--font-d);
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .co-close {
+      background: var(--surface-2);
+      border: none;
+      color: var(--text-2);
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .co-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .co-section-label {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 10px;
+    }
+    .co-item-list { display: flex; flex-direction: column; gap: 0; }
+    .co-item-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.1s;
+      user-select: none;
+    }
+    .co-item-row:last-child { border-bottom: none; }
+    .co-check {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border-2);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      color: transparent;
+      transition: all 0.15s;
+    }
+    .co-item-row.selected .co-check {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #1a1610;
+    }
+    .co-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .co-item-name { font-size: 15px; color: var(--text); flex: 1; line-height: 1.3; }
+    .co-item-cat { font-size: 11px; color: var(--text-3); }
+    .co-footer {
+      display: flex;
+      gap: 12px;
+      padding: 16px 20px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .co-footer .btn { flex: 1; padding: 14px; font-size: 13px; }
+
     /* Photo lightbox */
     .photo-lightbox {
       display: none;
@@ -1000,6 +1033,24 @@
 <body>
 <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
 
+<!-- Create Outfit Modal -->
+<div class="co-backdrop" id="coBackdrop" onclick="closeCreateOutfitModal()"></div>
+<div class="co-sheet" id="coSheet">
+  <div class="co-header">
+    <div class="co-title">New Outfit</div>
+    <button class="co-close" onclick="closeCreateOutfitModal()">✕</button>
+  </div>
+  <div class="co-body">
+    <input class="form-input" id="co-name" placeholder="Outfit name" type="text" style="margin-bottom:16px">
+    <div class="co-section-label">Select Items</div>
+    <div class="co-item-list" id="coItemList"></div>
+  </div>
+  <div class="co-footer">
+    <button class="btn btn-outline" onclick="closeCreateOutfitModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveNewOutfit()">Save Outfit</button>
+  </div>
+</div>
+
 <!-- Photo lightbox -->
 <div class="photo-lightbox" id="photoLightbox" onclick="closeLightbox(event)">
   <button class="lightbox-close" onclick="closeLightboxBtn()">✕</button>
@@ -1042,7 +1093,7 @@
         <button class="filter-btn" data-filter="all" onclick="setFilter('all',this)">All</button>
         <button class="filter-btn" data-filter="age2" onclick="setFilter('age2',this)">Ages Up Most</button>
       </div>
-      <div id="outfitFormContainer"></div>
+      <button class="wrd-add-btn" style="margin-top:14px" onclick="openCreateOutfitModal()">+ Create Outfit</button>
       <div class="outfits-list" id="outfitsList"></div>
     </div>
 
@@ -1447,52 +1498,42 @@ function setFilter(f, btn) {
   renderOutfitsList();
 }
 
-function renderOutfitFormContainer() {
-  const wasOpen = !!document.getElementById('outfitFormContainer')?.querySelector('.outfit-form.open');
-
-  // Build picker: sort items by id, group by section
+function openCreateOutfitModal() {
+  selectedOutfitItems.clear();
+  // Build item list sorted by section
   const entries = Object.entries(W).sort((a, b) => +a[0] - +b[0]);
-  let pickerHtml = '';
+  let html = '';
   let lastSection = null;
   entries.forEach(([idStr, item]) => {
     if (!item) return;
     const id = +idStr;
-    const group = getDisplayGroup(item);
-    const section = GROUP_SECTION[group] || 'Other';
+    const section = GROUP_SECTION[getDisplayGroup(item)] || 'Other';
     if (section !== lastSection) {
       lastSection = section;
-      pickerHtml += `<div class="item-picker-group">${section}</div>`;
+      html += `<div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);padding:14px 0 6px;font-family:var(--font-b)">${section}</div>`;
     }
-    const sel = selectedOutfitItems.has(id) ? ' selected' : '';
-    pickerHtml += `<div class="item-picker-row${sel}" data-outfit-item="${id}" onclick="toggleOutfitItem(${id})">
-      <span class="item-picker-check">✓</span>
-      <span class="item-picker-dot" style="background:${item.color}"></span>
-      <span class="item-picker-name">${item.name}</span>
-      <span class="item-picker-cat">${item.cat}</span>
+    html += `<div class="co-item-row" id="co-row-${id}" onclick="toggleCoItem(${id})">
+      <span class="co-check">✓</span>
+      <span class="co-dot" style="background:${item.color}"></span>
+      <span class="co-item-name">${item.name}</span>
+      <span class="co-item-cat">${item.cat}</span>
     </div>`;
   });
+  document.getElementById('coItemList').innerHTML = html;
+  document.getElementById('co-name').value = '';
+  document.getElementById('coBackdrop').classList.add('open');
+  document.getElementById('coSheet').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('co-name').focus(), 350);
+}
 
-  document.getElementById('outfitFormContainer').innerHTML = `
-    <button class="wrd-add-btn" onclick="toggleOutfitForm()">+ Create Outfit</button>
-    <div class="outfit-form${wasOpen ? ' open' : ''}" id="outfitForm">
-      <div class="outfit-form-title">New Outfit</div>
-      <div class="form-row">
-        <label class="form-label">Name *</label>
-        <input class="form-input" id="of-name" placeholder="e.g. Casual Friday" type="text">
-      </div>
-      <div class="form-row">
-        <label class="form-label">Items *</label>
-        <div class="item-picker">${pickerHtml}</div>
-      </div>
-      <div class="form-actions">
-        <button class="btn btn-outline" onclick="toggleOutfitForm()">Cancel</button>
-        <button class="btn btn-primary" onclick="createOutfit()">Save Outfit</button>
-      </div>
-    </div>`;
+function closeCreateOutfitModal() {
+  document.getElementById('coBackdrop').classList.remove('open');
+  document.getElementById('coSheet').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 function renderOutfitsList() {
-  renderOutfitFormContainer();
   const season = getSeason();
   let list = [...OUTFITS];
   if (outfitsFilter === 'season') list = list.filter(o => o.seasons.includes(season));
@@ -1549,31 +1590,20 @@ function toggleExpand(id) {
 
 let selectedOutfitItems = new Set();
 
-function toggleOutfitItem(id) {
+function toggleCoItem(id) {
   if (selectedOutfitItems.has(id)) {
     selectedOutfitItems.delete(id);
   } else {
     selectedOutfitItems.add(id);
   }
-  const row = document.querySelector(`[data-outfit-item="${id}"]`);
+  const row = document.getElementById(`co-row-${id}`);
   if (row) row.classList.toggle('selected', selectedOutfitItems.has(id));
 }
 
-function toggleOutfitForm() {
-  const form = document.getElementById('outfitForm');
-  if (!form) return;
-  const opening = !form.classList.contains('open');
-  form.classList.toggle('open');
-  if (opening) {
-    selectedOutfitItems.clear();
-    setTimeout(() => document.getElementById('of-name')?.focus(), 50);
-  }
-}
-
-function createOutfit() {
-  const name = document.getElementById('of-name')?.value.trim();
-  if (!name) { alert('Please enter a name.'); return; }
-  if (!selectedOutfitItems.size) { alert('Select at least one item.'); return; }
+function saveNewOutfit() {
+  const name = document.getElementById('co-name')?.value.trim();
+  if (!name) { document.getElementById('co-name').focus(); return; }
+  if (!selectedOutfitItems.size) { alert('Tap at least one item.'); return; }
   const itemIds = [...selectedOutfitItems];
   const pieces  = itemIds.map(id => [id, W[id]]).filter(([,i]) => i);
   const seasons  = getSeasonsForOutfit(pieces);
@@ -1588,6 +1618,7 @@ function createOutfit() {
   });
   saveOutfits(OUTFITS);
   selectedOutfitItems.clear();
+  closeCreateOutfitModal();
   renderOutfitsList();
 }
 
