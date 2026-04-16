@@ -1930,6 +1930,40 @@ function renderWardrobe() {
             <input class="wrd-color-pick" type="color" id="ec-${id}" value="${item.color}">
             <input class="wrd-edit-input" type="text" id="en-${id}" value="${item.name}" placeholder="Item name">
           </div>
+          <div style="margin-bottom:10px">
+            <select class="form-select" id="ecat-${id}" style="font-size:13px;padding:9px 12px">
+              <optgroup label="Tops">
+                <option value="Tee"        ${item.cat==='Tee'        ?'selected':''}>T-Shirt</option>
+                <option value="Sweater"    ${item.cat==='Sweater'    ?'selected':''}>Sweater / Quarter-Zip</option>
+                <option value="Sweatshirt" ${item.cat==='Sweatshirt' ?'selected':''}>Sweatshirt / Crewneck</option>
+                <option value="Hoodie"     ${item.cat==='Hoodie'     ?'selected':''}>Hoodie</option>
+                <option value="Polo"       ${item.cat==='Polo'       ?'selected':''}>Polo</option>
+                <option value="Shirt"      ${item.cat==='Shirt'      ?'selected':''}>Shirt</option>
+                <option value="Jacket"     ${item.cat==='Jacket'     ?'selected':''}>Jacket</option>
+              </optgroup>
+              <optgroup label="Bottoms">
+                <option value="Jeans"      ${item.cat==='Jeans'      ?'selected':''}>Jeans</option>
+                <option value="Pants"      ${item.cat==='Pants'      ?'selected':''}>Trousers / Chinos</option>
+                <option value="Shorts"     ${item.cat==='Shorts'     ?'selected':''}>Shorts</option>
+                <option value="Sweats"     ${item.cat==='Sweats'     ?'selected':''}>Sweatpants</option>
+              </optgroup>
+              <optgroup label="Shoes">
+                <option value="Sneakers"   ${item.cat==='Sneakers'   ?'selected':''}>Sneakers</option>
+                <option value="Boots"      ${item.cat==='Boots'      ?'selected':''}>Boots</option>
+                <option value="Loafers"    ${item.cat==='Loafers'    ?'selected':''}>Loafers</option>
+                <option value="Sandals"    ${item.cat==='Sandals'    ?'selected':''}>Sandals</option>
+                <option value="Shoes"      ${item.cat==='Shoes'      ?'selected':''}>Other Shoes</option>
+              </optgroup>
+              <optgroup label="Accessories">
+                <option value="Belt"       ${item.cat==='Belt'       ?'selected':''}>Belt</option>
+                <option value="Watch"      ${item.cat==='Watch'      ?'selected':''}>Watch</option>
+                <option value="Hat"        ${item.cat==='Hat'        ?'selected':''}>Hat</option>
+                <option value="Bag"        ${item.cat==='Bag'        ?'selected':''}>Bag</option>
+                <option value="Jewellery"  ${item.cat==='Jewellery'  ?'selected':''}>Jewellery</option>
+                <option value="Accessory"  ${item.cat==='Accessory'  ?'selected':''}>Other</option>
+              </optgroup>
+            </select>
+          </div>
           <div class="wrd-edit-actions">
             <button class="btn btn-outline" style="font-size:10px;padding:9px" onclick="cancelEdit(${id})">Cancel</button>
             <button class="btn btn-primary" style="font-size:10px;padding:9px" onclick="saveItemEdit(${id})">Save</button>
@@ -1957,9 +1991,11 @@ function cancelEdit(id) {
 function saveItemEdit(id) {
   const name  = document.getElementById(`en-${id}`)?.value.trim();
   const color = document.getElementById(`ec-${id}`)?.value;
+  const cat   = document.getElementById(`ecat-${id}`)?.value;
   if (!name) return;
   W[id].name  = name;
   W[id].color = color;
+  if (cat) W[id].cat = cat;
   saveWardrobe();
   editingItemId = null;
   renderWardrobe();
