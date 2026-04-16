@@ -482,6 +482,67 @@
       flex-shrink: 0;
     }
 
+    /* Outfit header row with delete button */
+    .ol-header { position: relative; }
+    .ol-del {
+      background: none;
+      border: none;
+      color: var(--text-3);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 4px;
+      line-height: 1;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ol-del:active { color: #c0392b; }
+
+    /* Create outfit form */
+    .outfit-form {
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .outfit-form.open { display: block; }
+    .outfit-form-title {
+      font-family: var(--font-d);
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .item-picker {
+      max-height: 240px;
+      overflow-y: auto;
+      border: 1px solid var(--border-2);
+      border-radius: 6px;
+      margin-bottom: 14px;
+    }
+    .item-picker-group {
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding: 8px 12px 4px;
+      background: var(--surface-2);
+    }
+    .item-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-top: 1px solid var(--border);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .item-picker-row:first-of-type { border-top: none; }
+    .item-picker-row input[type=checkbox] { width:16px; height:16px; accent-color: var(--accent); flex-shrink:0; }
+    .item-picker-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .item-picker-name { font-size: 13px; color: var(--text); flex: 1; }
+    .item-picker-cat { font-size: 10px; color: var(--text-3); }
+
     /* Expanded outfit card in list */
     .ol-expanded {
       display: none;
@@ -952,13 +1013,14 @@
     <div class="view" id="view-outfits">
       <div class="section-header">
         <div class="section-title">All<br>Outfits</div>
-        <div class="section-sub">12 curated combinations</div>
+        <div class="section-sub" id="outfitCount"></div>
       </div>
       <div class="filter-row">
         <button class="filter-btn active" data-filter="season" onclick="setFilter('season',this)">In Season</button>
         <button class="filter-btn" data-filter="all" onclick="setFilter('all',this)">All</button>
         <button class="filter-btn" data-filter="age2" onclick="setFilter('age2',this)">Ages Up Most</button>
       </div>
+      <div id="outfitFormContainer"></div>
       <div class="outfits-list" id="outfitsList"></div>
     </div>
 
@@ -1363,13 +1425,53 @@ function setFilter(f, btn) {
   renderOutfitsList();
 }
 
+function renderOutfitFormContainer() {
+  const open = document.getElementById('outfitFormContainer')?.querySelector('.outfit-form.open');
+  const wasOpen = !!open;
+  const groups = groupItems();
+  let pickerHtml = '';
+  GROUP_ORDER.forEach(g => {
+    const ids = groups[g]; if (!ids || !ids.length) return;
+    pickerHtml += `<div class="item-picker-group">${g}</div>`;
+    ids.forEach(id => {
+      const item = W[id]; if (!item) return;
+      pickerHtml += `<label class="item-picker-row">
+        <input type="checkbox" name="outfit-item" value="${id}">
+        <span class="item-picker-dot" style="background:${item.color}"></span>
+        <span class="item-picker-name">${item.name}</span>
+        <span class="item-picker-cat">${item.cat}</span>
+      </label>`;
+    });
+  });
+  document.getElementById('outfitFormContainer').innerHTML = `
+    <button class="wrd-add-btn" onclick="toggleOutfitForm()">+ Create Outfit</button>
+    <div class="outfit-form${wasOpen?' open':''}" id="outfitForm">
+      <div class="outfit-form-title">New Outfit</div>
+      <div class="form-row">
+        <label class="form-label">Name *</label>
+        <input class="form-input" id="of-name" placeholder="e.g. Casual Friday" type="text">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Items *</label>
+        <div class="item-picker">${pickerHtml}</div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="toggleOutfitForm()">Cancel</button>
+        <button class="btn btn-primary" onclick="createOutfit()">Save Outfit</button>
+      </div>
+    </div>`;
+}
+
 function renderOutfitsList() {
+  renderOutfitFormContainer();
   const season = getSeason();
   let list = [...OUTFITS];
   if (outfitsFilter === 'season') list = list.filter(o => o.seasons.includes(season));
   if (outfitsFilter === 'age2')   list = list.filter(o => o.ageRating === 2);
   list.sort((a,b) => b.ageRating - a.ageRating);
 
+  const el = document.getElementById('outfitCount');
+  if (el) el.textContent = `${OUTFITS.length} outfit${OUTFITS.length !== 1 ? 's' : ''}`;
   document.getElementById('outfitsList').innerHTML = list.map(o => {
     const inSeason = o.seasons.includes(season);
     const ageIcons = '⬆'.repeat(o.ageRating);
@@ -1399,6 +1501,7 @@ function renderOutfitsList() {
         <div class="ol-header">
           <div class="ol-name">${o.name}</div>
           <div class="ol-age">${ageIcons}</div>
+          <button class="ol-del" onclick="removeOutfit(event,${o.id})" title="Delete outfit">✕</button>
         </div>
         <div class="ol-meta">${o.occasion}${!inSeason ? ' · Out of season' : ''}</div>
         <div class="ol-chips">${chips}</div>
@@ -1412,6 +1515,45 @@ function renderOutfitsList() {
 
 function toggleExpand(id) {
   expandedOutfitId = (expandedOutfitId === id) ? null : id;
+  renderOutfitsList();
+}
+
+function toggleOutfitForm() {
+  const form = document.getElementById('outfitForm');
+  if (!form) return;
+  form.classList.toggle('open');
+  if (form.classList.contains('open')) {
+    setTimeout(() => document.getElementById('of-name')?.focus(), 50);
+  }
+}
+
+function createOutfit() {
+  const name = document.getElementById('of-name')?.value.trim();
+  if (!name) { alert('Please enter a name.'); return; }
+  const checked = [...document.querySelectorAll('input[name="outfit-item"]:checked')];
+  if (!checked.length) { alert('Select at least one item.'); return; }
+  const itemIds = checked.map(c => +c.value);
+  const pieces  = itemIds.map(id => [id, W[id]]).filter(([,i]) => i);
+  const seasons  = getSeasonsForOutfit(pieces);
+  const tempRange = getTempRange(pieces);
+  const occasion  = getOccasion(pieces);
+  const newId = Math.max(0, ...OUTFITS.map(o => o.id)) + 1;
+  OUTFITS.push({
+    id: newId, name, items: itemIds,
+    ageRating: 1, occasion, seasons,
+    tempMin: tempRange.min, tempMax: tempRange.max,
+    note: '', generated: false
+  });
+  saveOutfits(OUTFITS);
+  renderOutfitsList();
+}
+
+function removeOutfit(e, id) {
+  e.stopPropagation();
+  if (!confirm('Remove this outfit?')) return;
+  OUTFITS = OUTFITS.filter(o => o.id !== id);
+  if (expandedOutfitId === id) expandedOutfitId = null;
+  saveOutfits(OUTFITS);
   renderOutfitsList();
 }
 
