@@ -721,14 +721,23 @@
     .wrd-edit-actions { display: flex; gap: 8px; }
 
     /* Photo thumbnail in wardrobe */
+    .wrd-thumb-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      flex-shrink: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+    }
     .wrd-thumb {
       width: 44px;
       height: 44px;
       border-radius: 6px;
-      flex-shrink: 0;
       object-fit: cover;
       border: 1px solid var(--border-2);
-      cursor: pointer;
+      display: block;
     }
     .wrd-thumb-empty {
       width: 44px;
@@ -1964,8 +1973,8 @@ function renderWardrobe() {
       ].filter(Boolean).join('');
       const photo = photoCache[id];
       const thumbHtml = photo
-        ? `<img src="${photo}" class="wrd-thumb" onclick="openPhotoLightbox(${id})">`
-        : `<div class="wrd-thumb-empty" onclick="triggerPhotoUpload(${id})">📷</div>`;
+        ? `<button class="wrd-thumb-btn" onclick="openPhotoLightbox(${id})"><img src="${photo}" class="wrd-thumb"></button>`
+        : `<button class="wrd-thumb-btn" onclick="triggerPhotoUpload(${id})"><div class="wrd-thumb-empty">📷</div></button>`;
       const isEditing = editingItemId === id;
       html += `
         <div class="wrd-item" id="wrd-${id}">
