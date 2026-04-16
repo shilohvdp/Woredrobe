@@ -1767,15 +1767,45 @@ const CAT_GROUPS = {
   'Other':       [],
 };
 
+const GROUP_ORDER = [
+  'Quarter-Zips','Sweaters','Sweatshirts','Hoodies','T-Shirts','Polos','Shirts','Jackets',
+  'Jeans','Trousers','Shorts','Sweatpants',
+  'Sneakers','Boots','Loafers','Shoes','Sandals',
+  'Accessories','Other'
+];
+
+function getDisplayGroup(item) {
+  const n   = (item.name || '').toLowerCase();
+  const cat = item.cat;
+  if (n.includes('quarter-zip') || n.includes('quarter zip')) return 'Quarter-Zips';
+  if (cat === 'Sweater')    return 'Sweaters';
+  if (cat === 'Sweatshirt') return 'Sweatshirts';
+  if (cat === 'Hoodie')     return 'Hoodies';
+  if (cat === 'Tee')        return 'T-Shirts';
+  if (cat === 'Polo')       return 'Polos';
+  if (cat === 'Shirt')      return 'Shirts';
+  if (cat === 'Jacket')     return 'Jackets';
+  if (cat === 'Jeans')      return 'Jeans';
+  if (cat === 'Pants')      return 'Trousers';
+  if (cat === 'Shorts')     return 'Shorts';
+  if (cat === 'Sweats')     return 'Sweatpants';
+  if (cat === 'Sneakers')   return 'Sneakers';
+  if (cat === 'Boots')      return 'Boots';
+  if (cat === 'Loafers')    return 'Loafers';
+  if (cat === 'Sandals')    return 'Sandals';
+  if (CAT_GROUPS.Accessories.includes(cat)) return 'Accessories';
+  return 'Other';
+}
+
 function groupItems() {
-  const groups = { Tops: [], Bottoms: [], Shoes: [], Accessories: [], Other: [] };
+  const groups = {};
   Object.entries(W).forEach(([id, item]) => {
-    if      (CAT_GROUPS.Tops.includes(item.cat))        groups.Tops.push([+id, item]);
-    else if (CAT_GROUPS.Bottoms.includes(item.cat))     groups.Bottoms.push([+id, item]);
-    else if (CAT_GROUPS.Shoes.includes(item.cat))       groups.Shoes.push([+id, item]);
-    else if (CAT_GROUPS.Accessories.includes(item.cat)) groups.Accessories.push([+id, item]);
-    else groups.Other.push([+id, item]);
+    const g = getDisplayGroup(item);
+    if (!groups[g]) groups[g] = [];
+    groups[g].push([+id, item]);
   });
+  // Sort each group by item id
+  Object.values(groups).forEach(arr => arr.sort((a,b) => a[0]-b[0]));
   return groups;
 }
 
@@ -1844,9 +1874,10 @@ function renderWardrobe() {
       </div>
     </div>`;
 
-  for (const [group, items] of Object.entries(groups)) {
-    if (!items.length) continue;
-    items.sort((a,b) => a[0]-b[0]);
+  const orderedGroups = [...GROUP_ORDER, ...Object.keys(groups).filter(g => !GROUP_ORDER.includes(g))];
+  for (const group of orderedGroups) {
+    const items = groups[group];
+    if (!items?.length) continue;
     html += `<div class="wrd-group-label">${group}</div>`;
     items.forEach(([id, item]) => {
       const tags = [
