@@ -956,16 +956,16 @@ const DEFAULT_WARDROBE = {
    1: { name:'Dark Navy Quarter-Zip',          color:'#1a2744', cat:'Sweater' },
    2: { name:'Cream Quarter-Zip',               color:'#e8dfc8', cat:'Sweater' },
    3: { name:'Khaki Harrington Jacket',         color:'#b0a07a', cat:'Jacket',     star:true },
-   4: { name:'Cream/Blue Colorblock Crewneck',  color:'#4878a8', cat:'Sweatshirt', brand:'The Normal Brand' },
-   5: { name:'Light Grey Crewneck',             color:'#b8b6b0', cat:'Sweatshirt', brand:'Uniqlo' },
+   4: { name:'Cream/Blue Colorblock Crewneck',  color:'#4878a8', cat:'Sweater', brand:'The Normal Brand' },
+   5: { name:'Light Grey Crewneck',             color:'#b8b6b0', cat:'Sweater', brand:'Uniqlo' },
    6: { name:'Dark Charcoal V-Neck',            color:'#3c3c3c', cat:'Sweater' },
-   7: { name:'Forest Green Crewneck',           color:'#2d5a3d', cat:'Sweatshirt', brand:'Uniqlo' },
+   7: { name:'Forest Green Crewneck',           color:'#2d5a3d', cat:'Sweater', brand:'Uniqlo' },
    8: { name:'Black Basketball Hoodie',         color:'#1a1a1a', cat:'Hoodie' },
    9: { name:'Olive Pullover Hoodie',           color:'#6b7840', cat:'Hoodie' },
   10: { name:'White Polo',                      color:'#f0ede8', cat:'Polo',        brand:'Uniqlo' },
   11: { name:'Black Crewneck Sweater',          color:'#232323', cat:'Sweater',     brand:'Uniqlo' },
   12: { name:'Black Quarter-Zip',               color:'#1d1d1d', cat:'Sweater' },
-  13: { name:'Grey SNL Graphic Crewneck',       color:'#8a8a8a', cat:'Sweatshirt' },
+  13: { name:'Grey SNL Graphic Crewneck',       color:'#8a8a8a', cat:'Sweater' },
   14: { name:'Sage/Stone Grey Tee',             color:'#9aaa90', cat:'Tee',         brand:'Uniqlo U' },
   15: { name:'Black Tee',                       color:'#1a1a1a', cat:'Tee',         brand:'Uniqlo U' },
   16: { name:'Cream/Beige Tee',                 color:'#e2d8c4', cat:'Tee',         brand:'Uniqlo' },
@@ -991,7 +991,10 @@ const WSTORE_KEY = 'woredrobe_wardrobe_v1';
 function loadWardrobe() {
   try {
     const saved = localStorage.getItem(WSTORE_KEY);
-    return saved ? JSON.parse(saved) : { ...DEFAULT_WARDROBE };
+    const w = saved ? JSON.parse(saved) : { ...DEFAULT_WARDROBE };
+    // migrate: merge Sweatshirt into Sweater
+    Object.values(w).forEach(item => { if (item.cat === 'Sweatshirt') item.cat = 'Sweater'; });
+    return w;
   } catch(e) { return { ...DEFAULT_WARDROBE }; }
 }
 function saveWardrobe() {
@@ -1537,7 +1540,7 @@ async function fetchWeather() {
 ═══════════════════════════════════════════ */
 
 const TOP_TYPES    = ['Tee','Polo','Shirt'];
-const MID_TYPES    = ['Sweater','Sweatshirt','Hoodie'];
+const MID_TYPES    = ['Sweater','Hoodie'];
 const OUTER_TYPES  = ['Jacket'];
 const BOTTOM_TYPES = ['Jeans','Pants','Shorts','Sweats'];
 
@@ -1583,7 +1586,6 @@ function scoreAgeUp(pieces) {
     if (item.cat === 'Sweater')          s += 3;
     if (item.cat === 'Shirt')            s += 3;
     if (item.cat === 'Polo')             s += 2;
-    if (item.cat === 'Sweatshirt')       s += 1;
     if (item.cat === 'Hoodie')           s -= 1;
     if (item.star)                       s += 2;
     if (item.avoid)                      s -= 4;
@@ -1600,7 +1602,7 @@ function scoreAgeUp(pieces) {
 function getSeasonsForOutfit(pieces) {
   const hasShorts  = pieces.some(([,i]) => i.cat === 'Shorts');
   const hasJacket  = pieces.some(([,i]) => OUTER_TYPES.includes(i.cat));
-  const hasSweater = pieces.some(([,i]) => ['Sweater','Sweatshirt'].includes(i.cat));
+  const hasSweater = pieces.some(([,i]) => ['Sweater'].includes(i.cat));
   if (hasShorts) return ['spring','summer'];
   if (hasJacket) return ['spring','fall'];
   if (hasSweater) return ['winter','fall','spring'];
@@ -1610,7 +1612,7 @@ function getSeasonsForOutfit(pieces) {
 function getTempRange(pieces) {
   const hasShorts  = pieces.some(([,i]) => i.cat === 'Shorts');
   const hasJacket  = pieces.some(([,i]) => OUTER_TYPES.includes(i.cat));
-  const hasSweater = pieces.some(([,i]) => ['Sweater','Sweatshirt','Hoodie'].includes(i.cat));
+  const hasSweater = pieces.some(([,i]) => ['Sweater','Hoodie'].includes(i.cat));
   const hasLightTop= pieces.some(([,i]) => TOP_TYPES.includes(i.cat));
   if (hasShorts && hasSweater)  return {min:50, max:72};
   if (hasShorts)                return {min:68, max:100};
@@ -1635,7 +1637,7 @@ function nameOutfit(pieces, used) {
     name = `${outer[1].name.split(' ').slice(0,2).join(' ')} Edit`;
   } else if (mid) {
     const cl = colorLabel(mid[1].color);
-    const type = mid[1].cat === 'Sweater' ? 'Quarter-Zip' : mid[1].cat === 'Sweatshirt' ? 'Crewneck' : 'Hoodie';
+    const type = mid[1].cat === 'Hoodie' ? 'Hoodie' : 'Sweater';
     name = `${cl} ${type}`;
   } else if (base && hasShorts) {
     name = `${colorLabel(base[1].color)} Summer`;
@@ -1770,7 +1772,7 @@ function rebuildOutfits() {
 ═══════════════════════════════════════════ */
 
 const CAT_GROUPS = {
-  'Tops':        ['Sweater','Sweatshirt','Hoodie','Tee','Polo','Jacket','Shirt'],
+  'Tops':        ['Sweater','Hoodie','Tee','Polo','Jacket','Shirt'],
   'Bottoms':     ['Jeans','Pants','Shorts','Sweats'],
   'Shoes':       ['Shoes','Boots','Sneakers','Loafers','Sandals'],
   'Accessories': ['Belt','Watch','Hat','Bag','Jewellery','Accessory'],
@@ -1778,14 +1780,14 @@ const CAT_GROUPS = {
 };
 
 const GROUP_ORDER = [
-  'Quarter-Zips','Sweaters','Sweatshirts','Hoodies','T-Shirts','Polos','Shirts','Jackets',
+  'Quarter-Zips','Sweaters','Hoodies','T-Shirts','Polos','Shirts','Jackets',
   'Jeans','Trousers','Shorts','Sweatpants',
   'Sneakers','Boots','Loafers','Shoes','Sandals',
   'Accessories','Other'
 ];
 
 const GROUP_SECTION = {
-  'Quarter-Zips':'Tops', 'Sweaters':'Tops', 'Sweatshirts':'Tops', 'Hoodies':'Tops',
+  'Quarter-Zips':'Tops', 'Sweaters':'Tops', 'Hoodies':'Tops',
   'T-Shirts':'Tops', 'Polos':'Tops', 'Shirts':'Tops', 'Jackets':'Tops',
   'Jeans':'Bottoms', 'Trousers':'Bottoms', 'Shorts':'Bottoms', 'Sweatpants':'Bottoms',
   'Sneakers':'Shoes', 'Boots':'Shoes', 'Loafers':'Shoes', 'Shoes':'Shoes', 'Sandals':'Shoes',
@@ -1797,7 +1799,6 @@ function getDisplayGroup(item) {
   const cat = item.cat;
   if (n.includes('quarter-zip') || n.includes('quarter zip')) return 'Quarter-Zips';
   if (cat === 'Sweater')    return 'Sweaters';
-  if (cat === 'Sweatshirt') return 'Sweatshirts';
   if (cat === 'Hoodie')     return 'Hoodies';
   if (cat === 'Tee')        return 'T-Shirts';
   if (cat === 'Polo')       return 'Polos';
@@ -1851,8 +1852,7 @@ function renderWardrobe() {
         <select class="form-select" id="f-cat">
           <optgroup label="Tops">
             <option value="Tee">Tee</option>
-            <option value="Sweater">Sweater</option>
-            <option value="Sweatshirt">Sweatshirt</option>
+            <option value="Sweater">Sweater / Crewneck</option>
             <option value="Hoodie">Hoodie</option>
             <option value="Polo">Polo</option>
             <option value="Shirt">Shirt</option>
@@ -1934,8 +1934,7 @@ function renderWardrobe() {
             <select class="form-select" id="ecat-${id}" style="font-size:13px;padding:9px 12px">
               <optgroup label="Tops">
                 <option value="Tee"        ${item.cat==='Tee'        ?'selected':''}>T-Shirt</option>
-                <option value="Sweater"    ${item.cat==='Sweater'    ?'selected':''}>Sweater / Quarter-Zip</option>
-                <option value="Sweatshirt" ${item.cat==='Sweatshirt' ?'selected':''}>Sweatshirt / Crewneck</option>
+                <option value="Sweater"    ${item.cat==='Sweater'    ?'selected':''}>Sweater / Crewneck</option>
                 <option value="Hoodie"     ${item.cat==='Hoodie'     ?'selected':''}>Hoodie</option>
                 <option value="Polo"       ${item.cat==='Polo'       ?'selected':''}>Polo</option>
                 <option value="Shirt"      ${item.cat==='Shirt'      ?'selected':''}>Shirt</option>
