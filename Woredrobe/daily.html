@@ -586,12 +586,22 @@
     /* ─────────────────────────────────────
        WARDROBE VIEW
     ───────────────────────────────────── */
+    .wrd-section-header {
+      font-family: var(--font-d);
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text);
+      padding: 28px 0 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2px;
+      letter-spacing: -0.01em;
+    }
     .wrd-group-label {
       font-size: 9px;
       letter-spacing: 0.26em;
       text-transform: uppercase;
       color: var(--accent);
-      padding: 22px 0 10px;
+      padding: 18px 0 8px;
     }
     .wrd-item {
       display: flex;
@@ -1774,6 +1784,14 @@ const GROUP_ORDER = [
   'Accessories','Other'
 ];
 
+const GROUP_SECTION = {
+  'Quarter-Zips':'Tops', 'Sweaters':'Tops', 'Sweatshirts':'Tops', 'Hoodies':'Tops',
+  'T-Shirts':'Tops', 'Polos':'Tops', 'Shirts':'Tops', 'Jackets':'Tops',
+  'Jeans':'Bottoms', 'Trousers':'Bottoms', 'Shorts':'Bottoms', 'Sweatpants':'Bottoms',
+  'Sneakers':'Shoes', 'Boots':'Shoes', 'Loafers':'Shoes', 'Shoes':'Shoes', 'Sandals':'Shoes',
+  'Accessories':'Accessories', 'Other':'Other',
+};
+
 function getDisplayGroup(item) {
   const n   = (item.name || '').toLowerCase();
   const cat = item.cat;
@@ -1875,9 +1893,15 @@ function renderWardrobe() {
     </div>`;
 
   const orderedGroups = [...GROUP_ORDER, ...Object.keys(groups).filter(g => !GROUP_ORDER.includes(g))];
+  let currentSection = null;
   for (const group of orderedGroups) {
     const items = groups[group];
     if (!items?.length) continue;
+    const section = GROUP_SECTION[group] || 'Other';
+    if (section !== currentSection) {
+      currentSection = section;
+      html += `<div class="wrd-section-header">${section}</div>`;
+    }
     html += `<div class="wrd-group-label">${group}</div>`;
     items.forEach(([id, item]) => {
       const tags = [
