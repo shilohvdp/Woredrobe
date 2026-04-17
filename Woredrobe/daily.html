@@ -639,6 +639,19 @@
       flex-shrink: 0;
     }
     .wrd-group-add:active { background: var(--accent-dim); }
+    .wrd-group-rename-input {
+      flex: 1;
+      background: var(--surface-2);
+      border: 1px solid var(--accent);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      font-family: var(--font-b);
+      outline: none;
+    }
     .wrd-item {
       display: flex;
       align-items: center;
@@ -2103,6 +2116,19 @@ const GROUP_TO_CAT = {
   'Accessories':'Accessory',
 };
 
+const CUSTOM_SECTIONS_KEY = 'woredrobe_custom_sections';
+function loadCustomSections() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_SECTIONS_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveCustomSections(obj) {
+  localStorage.setItem(CUSTOM_SECTIONS_KEY, JSON.stringify(obj));
+}
+function sectionForGroup(group) {
+  return GROUP_SECTION[group] || loadCustomSections()[group] || 'Other';
+}
+
+let renamingGroup = null;
+
 function getDisplayGroup(item) {
   const n   = (item.name || '').toLowerCase();
   const cat = item.cat;
@@ -2122,7 +2148,7 @@ function getDisplayGroup(item) {
   if (cat === 'Loafers')    return 'Loafers';
   if (cat === 'Sandals')    return 'Sandals';
   if (CAT_GROUPS.Accessories.includes(cat)) return 'Accessories';
-  return 'Other';
+  return cat || 'Other'; // custom renamed groups use their cat value as group name
 }
 
 function groupItems() {
@@ -2206,13 +2232,30 @@ function renderWardrobe() {
   for (const group of orderedGroups) {
     const items = groups[group];
     if (!items?.length) continue;
-    const section = GROUP_SECTION[group] || 'Other';
+    const section = sectionForGroup(group);
     if (section !== currentSection) {
       currentSection = section;
       html += `<div class="wrd-section-header">${section}</div>`;
     }
-    const groupCat = GROUP_TO_CAT[group] || '';
-    html += `<div class="wrd-group-label"><span>${group}</span>${groupCat ? `<button class="wrd-group-add" onclick="openAddFormWithCat('${groupCat}')">+</button>` : ''}</div>`;
+    const groupCat = GROUP_TO_CAT[group] || group;
+    const safeId = group.replace(/[^a-zA-Z0-9]/g,'-');
+    if (renamingGroup === group) {
+      html += `<div class="wrd-group-label">
+        <input id="grename-${safeId}" class="wrd-group-rename-input" value="${group}" onkeydown="if(event.key==='Enter')saveRenameGroup('${group}');if(event.key==='Escape')cancelRenameGroup()">
+        <div style="display:flex;gap:6px">
+          <button class="wrd-group-add" onclick="saveRenameGroup('${group}')">✓</button>
+          <button class="wrd-group-add" onclick="cancelRenameGroup()">✕</button>
+        </div>
+      </div>`;
+    } else {
+      html += `<div class="wrd-group-label">
+        <span>${group}</span>
+        <div style="display:flex;gap:6px">
+          <button class="wrd-group-add" onclick="startRenameGroup('${group}')">✎</button>
+          <button class="wrd-group-add" onclick="openAddFormWithCat('${groupCat}')">+</button>
+        </div>
+      </div>`;
+    }
     items.forEach(([id, item]) => {
       const tags = [
         item.star  ? `<span class="wrd-tag wrd-tag-star">★ Anchor</span>` : '',
@@ -2325,6 +2368,37 @@ function toggleAddForm() {
   if (form.classList.contains('open')) {
     document.getElementById('f-name').focus();
   }
+}
+
+function startRenameGroup(group) {
+  renamingGroup = group;
+  renderWardrobe();
+  const safeId = group.replace(/[^a-zA-Z0-9]/g,'-');
+  setTimeout(() => { const el = document.getElementById(`grename-${safeId}`); if(el){el.select();} }, 80);
+}
+
+function cancelRenameGroup() {
+  renamingGroup = null;
+  renderWardrobe();
+}
+
+function saveRenameGroup(oldGroup) {
+  const safeId = oldGroup.replace(/[^a-zA-Z0-9]/g,'-');
+  const newName = document.getElementById(`grename-${safeId}`)?.value.trim();
+  if (!newName || newName === oldGroup) { cancelRenameGroup(); return; }
+  // Update cat on every item in this group
+  Object.keys(W).forEach(id => {
+    if (getDisplayGroup(W[id]) === oldGroup) W[id].cat = newName;
+  });
+  saveWardrobe();
+  // Persist section mapping for the new group name
+  const section = sectionForGroup(oldGroup);
+  const custom = loadCustomSections();
+  delete custom[oldGroup];
+  if (!GROUP_SECTION[newName]) custom[newName] = section;
+  saveCustomSections(custom);
+  renamingGroup = null;
+  renderWardrobe();
 }
 
 function openAddFormWithCat(cat) {
