@@ -788,7 +788,7 @@
       border-radius: 16px 16px 0 0;
       border-top: 1px solid var(--border-2);
       z-index: 8001;
-      max-height: 88vh;
+      height: 86vh;
       display: flex;
       flex-direction: column;
       transform: translateY(100%);
@@ -1533,7 +1533,6 @@ function openCreateOutfitModal() {
   document.getElementById('coBackdrop').classList.add('open');
   document.getElementById('coSheet').classList.add('open');
   document.body.style.overflow = 'hidden';
-  setTimeout(() => document.getElementById('co-name').focus(), 350);
 }
 
 function closeCreateOutfitModal() {
@@ -1610,25 +1609,30 @@ function toggleCoItem(id) {
 }
 
 function saveNewOutfit() {
-  const name = document.getElementById('co-name')?.value.trim();
-  if (!name) { document.getElementById('co-name').focus(); return; }
-  if (!selectedOutfitItems.size) { alert('Tap at least one item.'); return; }
-  const itemIds = [...selectedOutfitItems];
-  const pieces  = itemIds.map(id => [id, W[id]]).filter(([,i]) => i);
-  const seasons  = getSeasonsForOutfit(pieces);
-  const tempRange = getTempRange(pieces);
-  const occasion  = occasionFor(pieces);
-  const newId = Math.max(0, ...OUTFITS.map(o => o.id)) + 1;
-  OUTFITS.push({
-    id: newId, name, items: itemIds,
-    ageRating: 1, occasion, seasons,
-    tempMin: tempRange.min, tempMax: tempRange.max,
-    note: '', generated: false
-  });
-  saveOutfits(OUTFITS);
-  selectedOutfitItems.clear();
-  closeCreateOutfitModal();
-  renderOutfitsList();
+  try {
+    const nameEl = document.getElementById('co-name');
+    const name = nameEl ? nameEl.value.trim() : '';
+    if (!name) { alert('Enter an outfit name first.'); return; }
+    if (!selectedOutfitItems.size) { alert('Tap at least one item.'); return; }
+    const itemIds = [...selectedOutfitItems].map(Number);
+    const pieces  = itemIds.map(id => [id, W[id]]).filter(([,i]) => i);
+    const seasons   = getSeasonsForOutfit(pieces);
+    const tempRange = getTempRange(pieces);
+    const occasion  = occasionFor(pieces);
+    const newId = Math.max(0, ...OUTFITS.map(o => o.id)) + 1;
+    OUTFITS.push({
+      id: newId, name, items: itemIds,
+      ageRating: 1, occasion, seasons,
+      tempMin: tempRange.min, tempMax: tempRange.max,
+      note: '', generated: false
+    });
+    saveOutfits(OUTFITS);
+    selectedOutfitItems.clear();
+    closeCreateOutfitModal();
+    renderOutfitsList();
+  } catch(err) {
+    alert('Error saving: ' + err.message);
+  }
 }
 
 function removeOutfit(e, id) {
