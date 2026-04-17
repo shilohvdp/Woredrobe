@@ -1504,22 +1504,15 @@ function openCreateOutfitModal() {
   const groups = groupItems();
   const orderedGroups = [...GROUP_ORDER, ...Object.keys(groups).filter(g => !GROUP_ORDER.includes(g))];
   let html = '';
-  let currentSection = null;
   for (const group of orderedGroups) {
     const items = groups[group];
     if (!items?.length) continue;
-    const section = GROUP_SECTION[group] || 'Other';
-    if (section !== currentSection) {
-      currentSection = section;
-      html += `<div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);padding:16px 0 4px;font-family:var(--font-b);font-weight:600">${section}</div>`;
-    }
-    html += `<div style="font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-3);padding:8px 0 4px;font-family:var(--font-b)">${group}</div>`;
+    html += `<div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);padding:14px 0 4px;font-family:var(--font-b);font-weight:600">${group}</div>`;
     items.forEach(([id, item]) => {
       html += `<div class="co-item-row" id="co-row-${id}" onclick="toggleCoItem(${id})">
         <span class="co-check">✓</span>
         <span class="co-dot" style="background:${item.color}"></span>
         <span class="co-item-name">${item.name}</span>
-        <span class="co-item-cat">${item.cat}</span>
       </div>`;
     });
   }
