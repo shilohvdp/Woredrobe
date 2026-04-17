@@ -1500,34 +1500,29 @@ function setFilter(f, btn) {
 
 function openCreateOutfitModal() {
   selectedOutfitItems.clear();
-  // Build item list sorted by section then group then id
-  const SECTION_ORDER = ['Tops','Bottoms','Shoes','Accessories','Other'];
-  const entries = Object.entries(W).sort((a, b) => {
-    const sA = SECTION_ORDER.indexOf(GROUP_SECTION[getDisplayGroup(a[1])] || 'Other');
-    const sB = SECTION_ORDER.indexOf(GROUP_SECTION[getDisplayGroup(b[1])] || 'Other');
-    if (sA !== sB) return sA - sB;
-    const gA = GROUP_ORDER.indexOf(getDisplayGroup(a[1]));
-    const gB = GROUP_ORDER.indexOf(getDisplayGroup(b[1]));
-    if (gA !== gB) return gA - gB;
-    return +a[0] - +b[0];
-  });
+  // Build item list matching Clothes tab: section headers + group labels
+  const groups = groupItems();
+  const orderedGroups = [...GROUP_ORDER, ...Object.keys(groups).filter(g => !GROUP_ORDER.includes(g))];
   let html = '';
-  let lastSection = null;
-  entries.forEach(([idStr, item]) => {
-    if (!item) return;
-    const id = +idStr;
-    const section = GROUP_SECTION[getDisplayGroup(item)] || 'Other';
-    if (section !== lastSection) {
-      lastSection = section;
-      html += `<div style="font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);padding:14px 0 6px;font-family:var(--font-b)">${section}</div>`;
+  let currentSection = null;
+  for (const group of orderedGroups) {
+    const items = groups[group];
+    if (!items?.length) continue;
+    const section = GROUP_SECTION[group] || 'Other';
+    if (section !== currentSection) {
+      currentSection = section;
+      html += `<div style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);padding:16px 0 4px;font-family:var(--font-b);font-weight:600">${section}</div>`;
     }
-    html += `<div class="co-item-row" id="co-row-${id}" onclick="toggleCoItem(${id})">
-      <span class="co-check">✓</span>
-      <span class="co-dot" style="background:${item.color}"></span>
-      <span class="co-item-name">${item.name}</span>
-      <span class="co-item-cat">${item.cat}</span>
-    </div>`;
-  });
+    html += `<div style="font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-3);padding:8px 0 4px;font-family:var(--font-b)">${group}</div>`;
+    items.forEach(([id, item]) => {
+      html += `<div class="co-item-row" id="co-row-${id}" onclick="toggleCoItem(${id})">
+        <span class="co-check">✓</span>
+        <span class="co-dot" style="background:${item.color}"></span>
+        <span class="co-item-name">${item.name}</span>
+        <span class="co-item-cat">${item.cat}</span>
+      </div>`;
+    });
+  }
   document.getElementById('coItemList').innerHTML = html;
   document.getElementById('co-name').value = '';
   document.getElementById('coBackdrop').classList.add('open');
