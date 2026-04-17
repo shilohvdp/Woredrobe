@@ -2421,14 +2421,46 @@ function removePhoto(itemId) {
 // Generate outfits on first run (no saved outfits yet)
 if (!loadOutfits()) rebuildOutfits();
 
-// Init — load photos then render everything
-loadAllPhotos();
-renderHeader();
-renderToday();
-renderOutfitsList();
-renderNotes();
-renderWardrobe();
-fetchWeather();
+// Migrate photos from old IndexedDB storage to localStorage (runs once)
+function migratePhotosFromIndexedDB() {
+  return new Promise(resolve => {
+    try {
+      const req = indexedDB.open('woredrobe_photos', 1);
+      req.onerror = () => resolve();
+      req.onsuccess = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('photos')) { db.close(); resolve(); return; }
+        const tx  = db.transaction('photos', 'readonly');
+        const cur = tx.objectStore('photos').openCursor();
+        cur.onsuccess = ev => {
+          const c = ev.target.result;
+          if (c) {
+            const lsKey = PHOTO_PREFIX + c.key;
+            if (!localStorage.getItem(lsKey)) {
+              try { localStorage.setItem(lsKey, c.value); } catch(e) {}
+            }
+            c.continue();
+          } else {
+            db.close();
+            resolve();
+          }
+        };
+        cur.onerror = () => { db.close(); resolve(); };
+      };
+    } catch(e) { resolve(); }
+  });
+}
+
+// Init — migrate old photos then render everything
+migratePhotosFromIndexedDB().finally(() => {
+  loadAllPhotos();
+  renderHeader();
+  renderToday();
+  renderOutfitsList();
+  renderNotes();
+  renderWardrobe();
+  fetchWeather();
+});
 </script>
 </body>
 </html>
