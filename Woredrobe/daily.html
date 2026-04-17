@@ -618,7 +618,27 @@
       text-transform: uppercase;
       color: var(--accent);
       padding: 18px 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
+    .wrd-group-add {
+      background: none;
+      border: 1px solid rgba(200,168,106,0.35);
+      border-radius: 3px;
+      color: var(--accent);
+      font-size: 14px;
+      line-height: 1;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    }
+    .wrd-group-add:active { background: var(--accent-dim); }
     .wrd-item {
       display: flex;
       align-items: center;
@@ -2075,6 +2095,14 @@ const GROUP_SECTION = {
   'Accessories':'Accessories', 'Other':'Other',
 };
 
+const GROUP_TO_CAT = {
+  'Quarter-Zips':'Sweater', 'Sweaters':'Sweater', 'Hoodies':'Hoodie',
+  'T-Shirts':'Tee', 'Polos':'Polo', 'Shirts':'Shirt', 'Jackets':'Jacket',
+  'Jeans':'Jeans', 'Trousers':'Pants', 'Shorts':'Shorts', 'Sweatpants':'Sweats',
+  'Sneakers':'Sneakers', 'Boots':'Boots', 'Loafers':'Loafers', 'Shoes':'Shoes', 'Sandals':'Sandals',
+  'Accessories':'Accessory',
+};
+
 function getDisplayGroup(item) {
   const n   = (item.name || '').toLowerCase();
   const cat = item.cat;
@@ -2183,7 +2211,8 @@ function renderWardrobe() {
       currentSection = section;
       html += `<div class="wrd-section-header">${section}</div>`;
     }
-    html += `<div class="wrd-group-label">${group}</div>`;
+    const groupCat = GROUP_TO_CAT[group] || '';
+    html += `<div class="wrd-group-label"><span>${group}</span>${groupCat ? `<button class="wrd-group-add" onclick="openAddFormWithCat('${groupCat}')">+</button>` : ''}</div>`;
     items.forEach(([id, item]) => {
       const tags = [
         item.star  ? `<span class="wrd-tag wrd-tag-star">★ Anchor</span>` : '',
@@ -2296,6 +2325,14 @@ function toggleAddForm() {
   if (form.classList.contains('open')) {
     document.getElementById('f-name').focus();
   }
+}
+
+function openAddFormWithCat(cat) {
+  const form = document.getElementById('addForm');
+  form.classList.add('open');
+  document.getElementById('f-cat').value = cat;
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => document.getElementById('f-name').focus(), 300);
 }
 
 function addItem() {
