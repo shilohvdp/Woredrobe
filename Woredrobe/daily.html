@@ -1127,6 +1127,11 @@
         <button class="filter-btn" data-filter="age2" onclick="setFilter('age2',this)">Ages Up Most</button>
       </div>
       <button class="wrd-add-btn" style="margin-top:14px" onclick="openCreateOutfitModal()">+ Create Outfit</button>
+      <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:18px">
+        <div style="font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--accent);font-family:var(--font-b);font-weight:600;margin-bottom:10px">Auto-Generate</div>
+        <div class="callout" style="margin-bottom:12px">Build outfits automatically from your wardrobe using <strong>colour harmony</strong> and <strong>age-up scoring</strong>. Replaces any previously generated outfits.</div>
+        <button class="wrd-add-btn" style="margin-top:0" onclick="handleGenerateOutfits(this)">⟳ Generate Outfits</button>
+      </div>
       <div class="outfits-list" id="outfitsList"></div>
     </div>
 
@@ -2076,9 +2081,21 @@ function rebuildOutfits() {
   saveOutfits(OUTFITS);
   renderOutfitsList();
   renderToday();
-  // Update count badge on wardrobe
   const el = document.getElementById('outfitsBadge');
   if (el) el.textContent = OUTFITS.length;
+}
+
+function handleGenerateOutfits(btn) {
+  btn.textContent = 'Generating…';
+  btn.disabled = true;
+  setTimeout(() => {
+    rebuildOutfits();
+    btn.textContent = '✓ Done';
+    setTimeout(() => {
+      btn.textContent = '⟳ Generate Outfits';
+      btn.disabled = false;
+    }, 2000);
+  }, 30);
 }
 
 /* ═══════════════════════════════════════════
